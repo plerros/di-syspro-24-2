@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <linux/limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -355,7 +356,10 @@ pid_t taskboard_run(struct taskboard *ptr)
 
 		int rc = 0;
 		if (pid == 0) {
-			fclose(stdout);
+			char outname[26 + 1 + 6];
+			sprintf(outname, "%d.output", getpid());
+			int fout = open(outname, O_WRONLY | O_CREAT, 0666);
+			dup2(fout, STDOUT_FILENO);
 			fclose(stderr);
 
 			// Add current working directory to path

@@ -57,6 +57,7 @@ cleantmp:
 	rm -f pipes/*
 	rm -f jobExecutorServer.txt
 	rm -f vgcore*
+	rm -f ./*.output
 
 .PHONY: clean
 
