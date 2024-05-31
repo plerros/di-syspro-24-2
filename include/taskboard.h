@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_TASKBOARD_H
-#define SYSPROG24_1_TASKBOARD_H
+#ifndef SYSPROG24_2_TASKBOARD_H
+#define SYSPROG24_2_TASKBOARD_H
 
 #include <unistd.h>
 
@@ -21,4 +21,4 @@ void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **repl
 size_t taskboard_get_waiting(struct taskboard *ptr, struct array **waiting);
 size_t taskboard_get_running(struct taskboard *ptr, struct array **running);
 pid_t taskboard_run(struct taskboard *ptr);
-#endif /*SYSPROG24_1_TASKBOARD_H*/
+#endif /*SYSPROG24_2_TASKBOARD_H*/

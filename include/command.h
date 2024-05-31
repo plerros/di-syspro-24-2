@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_COMMAND_H
-#define SYSPROG24_1_COMMAND_H
+#ifndef SYSPROG24_2_COMMAND_H
+#define SYSPROG24_2_COMMAND_H
 
 enum command_types
 {
@@ -22,4 +22,4 @@ enum command_length
 int command_recognize(struct array *arr);
 void command_strip(struct array *arr, struct array **ret);
 
-#endif /*SYSPROG24_1_COMMAND_H*/
+#endif /*SYSPROG24_2_COMMAND_H*/

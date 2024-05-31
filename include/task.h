@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_TASK_H
-#define SYSPROG24_1_TASK_H
+#ifndef SYSPROG24_2_TASK_H
+#define SYSPROG24_2_TASK_H
 
 #include <unistd.h>
 
@@ -24,4 +24,4 @@ bool task_iswaiting(struct task *ptr);
 void task_run(struct task *ptr);
 void task_end(struct task *ptr);
 
-#endif /*SYSPROG24_1_TASK_H*/
+#endif /*SYSPROG24_2_TASK_H*/

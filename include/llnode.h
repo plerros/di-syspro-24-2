@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_LLNODE_H
-#define SYSPROG24_1_LLNODE_H
+#ifndef SYSPROG24_2_LLNODE_H
+#define SYSPROG24_2_LLNODE_H
 
 struct llnode
 {
@@ -15,4 +15,4 @@ size_t llnode_getsize(struct llnode *ptr);
 void *llnode_get(struct llnode *ptr, size_t index);
 void llnode_link(struct llnode **ptr, struct llnode **next);
 
-#endif /* SYSPROG24_1_LLNODE_H */
+#endif /* SYSPROG24_2_LLNODE_H */

@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_CONFIGURATION_H
-#define SYSPROG24_1_CONFIGURATION_H
+#ifndef SYSPROG24_2_CONFIGURATION_H
+#define SYSPROG24_2_CONFIGURATION_H
 
 #include <stdbool.h>
 
@@ -18,4 +18,4 @@
  * Stray away from the requested implementation for more speed!
  */
 
-#endif /*SYSPROG24_1_CONFIGURATION_H*/
+#endif /*SYSPROG24_2_CONFIGURATION_H*/

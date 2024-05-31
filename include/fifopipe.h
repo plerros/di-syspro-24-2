@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_FIFOPIPE_H
-#define SYSPROG24_1_FIFOPIPE_H
+#ifndef SYSPROG24_2_FIFOPIPE_H
+#define SYSPROG24_2_FIFOPIPE_H
 
 enum pipe_type {readonly, writeonly};
 
@@ -27,4 +27,4 @@ void ropipe_new(struct ropipe **ptr, const char *name);
 void ropipe_free(struct ropipe *ptr);
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count);
 
-#endif /*SYSPROG24_1_FIFOPIPE_H*/
+#endif /*SYSPROG24_2_FIFOPIPE_H*/

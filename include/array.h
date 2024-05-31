@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_ARRAY_H
-#define SYSPROG24_1_ARRAY_H
+#ifndef SYSPROG24_2_ARRAY_H
+#define SYSPROG24_2_ARRAY_H
 
 #include "configuration_adv.h"
 #include "llnode.h"
@@ -18,4 +18,4 @@ size_t array_get_size(struct array *ptr);
 size_t array_get_elementsize(struct array *ptr);
 void array_print_str(struct array *arr);
 void array_copy(struct array *src, struct array **dst);
-#endif /*SYSPROG24_1_ARRAY_H*/
+#endif /*SYSPROG24_2_ARRAY_H*/

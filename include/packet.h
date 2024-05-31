@@ -1,5 +1,5 @@
-#ifndef SYSPROG24_1_PACKET_H
-#define SYSPROG24_1_PACKET_H
+#ifndef SYSPROG24_2_PACKET_H
+#define SYSPROG24_2_PACKET_H
 
 #include <stddef.h>
 
@@ -22,4 +22,4 @@ void packets_unpack(struct packets *ptr, struct array **dst);
 
 void packets_send(struct packets *ptr, struct wopipe *pipe);
 void packets_receive(struct packets *ptr, struct ropipe *pipe);
-#endif /*SYSPROG24_1_PACKET_H*/
+#endif /*SYSPROG24_2_PACKET_H*/
