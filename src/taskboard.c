@@ -174,33 +174,6 @@ void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **repl
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
-void taskboard_remove_pid(struct taskboard *ptr, pid_t pid)
-{
-	if (ptr == NULL)
-		return;
-
-	if (ptr->tasks == NULL && ptr->addlater == NULL)
-		return;
-
-	sigset_t oldmask;
-	block_sigchild(&oldmask);
-
-	taskboard_addnow(ptr);
-
-	size_t size = array_get_size(ptr->tasks);
-	struct task *tmp = NULL;
-	for (size_t i = 0; i < size; i++) {
-		tmp = (struct task *)array_get(ptr->tasks, i);
-		if (tmp->pid != pid)
-			tmp = NULL;
-		else
-			break;
-	}
-	task_end(tmp);
-
-	sigprocmask(SIG_SETMASK, &oldmask, NULL);
-}
-
 static void concat(char **str1, char *str2)
 {
 	if (*str1 == NULL && str2 == NULL) {
