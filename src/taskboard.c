@@ -11,6 +11,16 @@
 #include "task.h"
 #include "taskboard.h"
 
+
+static struct task *task_get(struct array *ptr, size_t tid)
+{
+	struct task **ret = array_get(ptr, tid);
+	if (ret == NULL)
+		return NULL;
+
+	return (*ret);
+}
+
 void taskboard_addnow(struct taskboard *ptr);
 
 void taskboard_new(struct taskboard **ptr)
@@ -30,18 +40,10 @@ void taskboard_new(struct taskboard **ptr)
 	new->addlater = NULL;
 
 	// Dummy job to take up the job_id 0
-	llnode_new(&(new->addlater), sizeof(struct task), NULL);
+	llnode_new(&(new->addlater), sizeof(struct task *), NULL);
 	struct task *dummy_job_0 = NULL;
 
-	task_new(&dummy_job_0, NULL, 0);
-
-	if (!task_isfinished(dummy_job_0))
-		abort();
-
-	llnode_add(&(new->addlater), dummy_job_0);
-
-	dummy_job_0->command = NULL;
-	task_free(dummy_job_0);
+	llnode_add(&(new->addlater), &dummy_job_0);
 
 	*ptr = new;
 }
@@ -53,20 +55,8 @@ void taskboard_free(struct taskboard *ptr)
 
 	size_t size = array_get_size(ptr->tasks);
 
-	/*
-	 * Note to self:
-	 * 
-	 * We can't call task_free().
-	 * If we did, llnode_free() would free the tasks twice!
-	 * 
-	 * Thankfully task_end() does exactly what we want.
-	 * Free all pointers and set them to 0 without freeing the object.
-	 * 
-	 * I'm sorry, this is extremely janky.
-	 */
-
 	for (size_t i = 0; i < size; i++)
-		taskboard_remove_tid(ptr, i, NULL);
+		taskboard_free_tid(ptr, i);
 
 	array_free(ptr->tasks);
 	ptr->tasks = NULL;
@@ -75,7 +65,7 @@ void taskboard_free(struct taskboard *ptr)
 
 	size = array_get_size(ptr->tasks);
 	for (size_t i = 0; i < size; i++)
-		taskboard_remove_tid(ptr, i, NULL);
+		taskboard_free_tid(ptr, i);
 
 	array_free(ptr->tasks);
 
@@ -95,15 +85,13 @@ size_t taskboard_add(struct taskboard *ptr, struct array *command)
 	block_sigchild(&oldmask);
 
 	if (ptr->addlater == NULL)
-		llnode_new(&(ptr->addlater), sizeof(struct task), NULL);
+		llnode_new(&(ptr->addlater), sizeof(struct task *), NULL);
 
 	size_t position = array_get_size(ptr->tasks) + llnode_getsize(ptr->addlater);
 
 	struct task *tmp = NULL;
 	task_new(&tmp, command, position);
-	llnode_add(&(ptr->addlater), tmp);
-	tmp->command = NULL; // It's janky, I'm sorry
-	task_free(tmp);
+	llnode_add(&(ptr->addlater), &tmp);
 
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	return position;
@@ -116,7 +104,7 @@ void taskboard_addnow(struct taskboard *ptr)
 
 	// Copy array data to an llnode
 	struct llnode *ll = NULL;
-	llnode_new(&ll, sizeof(struct task), NULL);
+	llnode_new(&ll, sizeof(struct task *), NULL);
 
 	size_t size = array_get_size(ptr->tasks);
 	for (size_t i = 0; i < size; i++)
@@ -145,7 +133,7 @@ void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **repl
 
 	taskboard_addnow(ptr);
 
-	struct task *tmp = (struct task *)array_get(ptr->tasks, tid);
+	struct task *tmp = task_get(ptr->tasks, tid);
 	if (tmp == NULL)
 		abort();
 
@@ -171,6 +159,29 @@ void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **repl
 	llnode_free(ll);
 
 	task_end(tmp);
+
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
+}
+
+void taskboard_free_tid(struct taskboard *ptr, size_t tid)
+{
+	if (ptr == NULL)
+		return;
+
+	if (tid >= array_get_size(ptr->tasks))
+		return;
+
+	sigset_t oldmask;
+	block_sigchild(&oldmask);
+
+	taskboard_addnow(ptr);
+
+	struct task **tmp = (struct task **)array_get(ptr->tasks, tid);
+	if (tmp == NULL)
+		abort();
+
+	task_free(*tmp);
+	*tmp = NULL;
 
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
@@ -247,7 +258,7 @@ size_t taskboard_get_waiting(struct taskboard *ptr, struct array **waiting)
 
 	for (size_t i = 0; i < size; i++) {
 
-		tmp = (struct task *)array_get(ptr->tasks, i);
+		tmp = task_get(ptr->tasks, i);
 		if (tmp == NULL)
 			continue;
 
@@ -296,7 +307,7 @@ size_t taskboard_get_running(struct taskboard *ptr, struct array **running)
 	size_t running_position = 0;
 
 	for (size_t i = 0; i < size; i++) {
-		tmp = (struct task *)array_get(ptr->tasks, i);
+		tmp = task_get(ptr->tasks, i);
 		if (task_isrunning(tmp)) {
 			concat_task(tmp, &str, running_position);
 			running_position++;
@@ -342,7 +353,7 @@ pid_t taskboard_run(struct taskboard *ptr)
 	struct task *tmp = NULL;
 
 	for (size_t i = 0; i < size; i++) {
-		tmp = (struct task *)array_get(ptr->tasks, i);
+		tmp = task_get(ptr->tasks, i);
 		if (task_iswaiting(tmp))
 			break;
 	}
