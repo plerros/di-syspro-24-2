@@ -133,3 +133,13 @@ size_t queue_find_pop(struct queue **ptr, size_t task_id, pid_t pid)
 
 	return ret;
 }
+
+void queue_find_pop_optional(
+	__attribute__((unused)) struct queue **ptr,
+	__attribute__((unused)) size_t task_id,
+	__attribute__((unused)) pid_t pid)
+{
+#if (QUEUE_CLEAR == true)
+	queue_find_pop(ptr, task_id, pid);
+#endif
+}

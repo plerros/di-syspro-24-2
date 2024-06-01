@@ -86,11 +86,14 @@ size_t array_get_elementsize(struct array *ptr)
 	return ptr->element_size;
 }
 
-void array_print_str(struct array *arr)
+void array_print_str(
+	__attribute__((unused)) struct array *arr)
 {
+#ifdef DEBUG
 	char *str = (char*) array_get(arr, 0);
 	if (str != NULL)
 		fprintf(stderr, "%s\n", str);
+#endif
 }
 
 void array_copy(struct array *src, struct array **dst)

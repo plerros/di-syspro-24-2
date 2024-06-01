@@ -87,12 +87,12 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 	struct array *stripped = NULL;
 	command_strip(command, &stripped);
 
-#ifdef DEBUG
 	array_print_str(command);
 	array_print_str(stripped);
-#endif
 
 	struct array *reply = NULL;
+	struct packets *p = NULL;
+	packets_new(&p);
 
 	switch (command_recognize(command)) {
 		case cmd_empty:
@@ -115,10 +115,8 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 
 		case cmd_stop: {
 			size_t task_id = array_to_u(stripped);
-#if (QUEUE_CLEAR == true)
-			queue_find_pop(&(exd->waiting), task_id, -1);
-			queue_find_pop(&(exd->running), task_id, -1);
-#endif
+			queue_find_pop_optional(&(exd->waiting), task_id, -1);
+			queue_find_pop_optional(&(exd->running), task_id, -1);
 			taskboard_remove_tid(exd->tboard, task_id, &reply);
 			break;
 		}
@@ -163,14 +161,12 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 		llnode_free(ll);
 	}
 
-	struct packets *p = NULL;
-	packets_new(&p);
 	packets_pack(p, reply);
 	packets_send(p, exd->to_cmd);
-	packets_free(p);
-	array_free(reply);
 
 skip:
+	packets_free(p);
+	array_free(reply);
 	array_free(stripped);
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
