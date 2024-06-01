@@ -18,7 +18,6 @@ struct packet
 	char data[PAKET_DATA_SIZE];
 };
 
-
 size_t packet_get_datasum(struct packet *ptr)
 {
 	if (ptr == NULL)

@@ -102,12 +102,6 @@ void task_run(struct task *ptr)
 	}
 }
 
-/*
- * Note to future self:
- * 
- * This function must free all pointers & set them to NULL.
- */
-
 void task_end(struct task *ptr)
 {
 	if (ptr == NULL)

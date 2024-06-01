@@ -75,7 +75,6 @@ void queue_push(struct queue **ptr, size_t task_id, pid_t pid)
 	*ptr = new;
 }
 
-
 size_t queue_pop(struct queue **ptr)
 {
 	if (ptr == NULL)

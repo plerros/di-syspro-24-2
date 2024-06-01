@@ -68,7 +68,6 @@ int main(int argc, char *argv[])
 	sprintf(toexec_name, "pipes/%d.toexec", pid);
 	sprintf(fromexec_name, "pipes/%d.tocmd", pid);
 
-
 	struct llnode *ll = NULL;
 	llnode_new(&ll, sizeof(char), NULL);
 	for (size_t i = 0; i < strlen(myname) + 1; i++)
@@ -84,7 +83,6 @@ int main(int argc, char *argv[])
 	array_free(arr);
 	packets_send(p, handshake);
 	packets_free(p);
-
 
 	while (access(toexec_name, F_OK) != 0);
 

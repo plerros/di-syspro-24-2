@@ -8,7 +8,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-
 #include "configuration.h"
 
 #include "helper.h"

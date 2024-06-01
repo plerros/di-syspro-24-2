@@ -6,7 +6,6 @@
 #include <string.h>
 #include "llnode.h"
 
-
 void llnode_new(struct llnode **ptr, size_t element_size, struct llnode *next)
 {
 	OPTIONAL_ASSERT(ptr != NULL);

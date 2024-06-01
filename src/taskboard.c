@@ -11,7 +11,6 @@
 #include "task.h"
 #include "taskboard.h"
 
-
 static struct task *task_get(struct array *ptr, size_t tid)
 {
 	struct task **ret = array_get(ptr, tid);
@@ -333,7 +332,6 @@ size_t taskboard_get_running(struct taskboard *ptr, struct array **running)
 
 	llnode_free(ll);
 
-
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	return running_position;
 }
@@ -348,7 +346,6 @@ pid_t taskboard_run(struct taskboard *ptr)
 
 	sigset_t oldmask;
 	block_sigchild(&oldmask);
-
 
 	taskboard_addnow(ptr);
 
