@@ -108,7 +108,8 @@ size_t queue_find_pop(struct queue **ptr, size_t task_id, pid_t pid)
 		return 0;
 
 	struct queue *to_remove = NULL;
-	for (struct queue *i = gnext(*ptr); i != *ptr; i = gnext(i)) {
+	struct queue *i = gnext(*ptr);
+	do {
 		if (pid_matters && queue_getpid(i) == pid) {
 			to_remove = i;
 			break;
@@ -117,7 +118,8 @@ size_t queue_find_pop(struct queue **ptr, size_t task_id, pid_t pid)
 			to_remove = i;
 			break;
 		}
-	}
+		i = gnext(i);
+	} while(i != *ptr);
 	if (to_remove == NULL)
 		return 0;
 
