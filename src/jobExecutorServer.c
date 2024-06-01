@@ -103,7 +103,7 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 			break;
 
 		case cmd_issueJob: {
-			size_t task_id = taskboard_add(exd->tboard, stripped);
+			size_t task_id = taskboard_add(exd->tboard, stripped, exd->to_cmd);
 			queue_push(&(exd->waiting), task_id, -1);
 			break;
 		}
@@ -164,6 +164,8 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 	packets_pack(p, reply);
 	packets_send(p, exd->to_cmd);
 
+	if (command_recognize(command) == cmd_issueJob)
+		exd->to_cmd = NULL;
 skip:
 	packets_free(p);
 	array_free(reply);

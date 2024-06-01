@@ -6,15 +6,21 @@
 #include "configuration.h"
 
 #include "array.h"
+#include "fifopipe.h"
 
 struct task
 {
 	struct array *command;
 	size_t taskid;
 	pid_t pid;
+	struct wopipe *to_cmd;
 };
 
-void task_new(struct task **ptr, struct array *command, size_t taskid);
+void task_new(
+	struct task **ptr,
+	struct array *command,
+	size_t taskid,
+	struct wopipe *to_cmd);
 void task_free(struct task *ptr);
 
 bool task_isfinished(struct task *ptr);

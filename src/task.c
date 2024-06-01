@@ -6,8 +6,13 @@
 
 #include "array.h"
 #include "task.h"
+#include "fifopipe.h"
 
-void task_new(struct task **ptr, struct array *command, size_t taskid)
+void task_new(
+	struct task **ptr,
+	struct array *command,
+	size_t taskid,
+	struct wopipe *to_cmd)
 {
 	OPTIONAL_ASSERT(ptr != NULL);
 	OPTIONAL_ASSERT(*ptr == NULL);
@@ -22,6 +27,7 @@ void task_new(struct task **ptr, struct array *command, size_t taskid)
 	new->taskid = taskid;
 	new->pid = -1;
 	new->command = NULL;
+	new->to_cmd = to_cmd;
 	array_copy(command, &(new->command));
 
 	*ptr = new;
@@ -36,6 +42,7 @@ void task_free(struct task *ptr)
 		kill(ptr->pid, SIGKILL);
 
 	array_free(ptr->command);
+	wopipe_free(ptr->to_cmd);
 	free(ptr);
 }
 

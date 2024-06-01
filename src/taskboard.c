@@ -72,7 +72,10 @@ void taskboard_free(struct taskboard *ptr)
 	free(ptr);
 }
 
-size_t taskboard_add(struct taskboard *ptr, struct array *command)
+size_t taskboard_add(
+	struct taskboard *ptr,
+	struct array *command,
+	struct wopipe *to_cmd)
 {
 	OPTIONAL_ASSERT(ptr != NULL);
 	if (ptr == NULL)
@@ -90,7 +93,7 @@ size_t taskboard_add(struct taskboard *ptr, struct array *command)
 	size_t position = array_get_size(ptr->tasks) + llnode_getsize(ptr->addlater);
 
 	struct task *tmp = NULL;
-	task_new(&tmp, command, position);
+	task_new(&tmp, command, position, to_cmd);
 	llnode_add(&(ptr->addlater), &tmp);
 
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);

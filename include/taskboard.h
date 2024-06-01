@@ -16,7 +16,10 @@ struct taskboard
 
 void taskboard_new(struct taskboard **ptr);
 void taskboard_free(struct taskboard *ptr);
-size_t taskboard_add(struct taskboard *ptr, struct array *command);
+size_t taskboard_add(
+	struct taskboard *ptr,
+	struct array *command,
+	struct wopipe *to_cmd);
 void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **reply);
 void taskboard_free_tid(struct taskboard *ptr, size_t tid);
 size_t taskboard_get_waiting(struct taskboard *ptr, struct array **waiting);
