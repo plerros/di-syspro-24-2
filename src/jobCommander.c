@@ -36,6 +36,32 @@ void wait_for_txt(int n)
 	}
 }
 
+void reply_receive(struct ropipe *from_exec)
+{
+	struct array *reply = NULL;
+	int retry = 0;
+	do {
+		array_free(reply);
+		reply = NULL;
+
+		struct packets *p = NULL;
+		packets_new(&p);
+		packets_receive(p, from_exec);
+		packets_unpack(p, &reply);
+		packets_free(p);
+		retry++;
+		if (retry % 100 == 0)
+			sleep(1);
+	} while (array_get(reply, 0) == NULL && retry < 10000);
+
+	char *str = (char *) array_get(reply, 0);
+	char str2[] = "ack";
+	if (str != NULL && !(strcmp(str, str2) == 0))
+		printf("%s\n", str);
+
+	array_free(reply);
+}
+
 int main(int argc, char *argv[])
 {
 	// Create Server Process if missing
@@ -127,32 +153,14 @@ int main(int argc, char *argv[])
 	packets_send(p, to_exec);
 	packets_free(p);
 
-	array_free(arr);
-
 	// Receive reply
+	reply_receive(from_exec);
 
-	struct array *reply = NULL;
-	int retry = 0;
-	do {
-		array_free(reply);
-		reply = NULL;
+	// If we issued a Job, wait for the stdout to be returned
+	if (command_recognize(arr) == cmd_issueJob)
+		reply_receive(from_exec);
 
-		p = NULL;
-		packets_new(&p);
-		packets_receive(p, from_exec);
-		packets_unpack(p, &reply);
-		packets_free(p);
-		retry++;
-		if (retry % 100 == 0)
-			sleep(1);
-	} while (array_get(reply, 0) == NULL && retry < 10000);
-
-	char *str = (char *) array_get(reply, 0);
-	char str2[] = "ack";
-	if (str != NULL && !(strcmp(str, str2) == 0))
-		printf("%s\n", str);
-
-	array_free(reply);
+	array_free(arr);
 
 	wopipe_free(to_exec);
 	ropipe_free(from_exec);

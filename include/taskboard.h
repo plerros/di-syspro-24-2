@@ -14,6 +14,8 @@ struct taskboard
 	struct llnode *addlater;
 };
 
+struct task *task_get(struct array *ptr, size_t tid);
+
 void taskboard_new(struct taskboard **ptr);
 void taskboard_free(struct taskboard *ptr);
 size_t taskboard_add(

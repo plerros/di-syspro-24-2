@@ -11,7 +11,7 @@
 #include "task.h"
 #include "taskboard.h"
 
-static struct task *task_get(struct array *ptr, size_t tid)
+struct task *task_get(struct array *ptr, size_t tid)
 {
 	struct task **ret = array_get(ptr, tid);
 	if (ret == NULL)

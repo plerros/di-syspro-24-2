@@ -17,6 +17,7 @@
 #include "fifopipe.h"
 #include "packet.h"
 #include "command.h"
+#include "task.h"
 #include "taskboard.h"
 
 void create_txt()
@@ -70,8 +71,43 @@ void sigchld_handler(__attribute__((unused))int sig)
 	pid_t pid;
 	while((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
 		size_t task_id =  queue_find_pop(&(global_data->running), 0, pid);
-		if (task_id != 0)
+		if (task_id != 0) {
+			char outname[26 + 1 + 6];
+			sprintf(outname, "%d.output", pid);
+			FILE *fp = fopen(outname, "r");
+
+			struct llnode *ll = NULL;
+			llnode_new(&ll, sizeof(char), NULL);
+
+			while (1) {
+				int ch = fgetc(fp);
+				if (feof(fp))
+					break;
+				if (ferror(fp))
+					break;
+				llnode_add(&ll, &ch);
+			}
+			fclose(fp);
+			remove(outname);
+
+			char end = '\0';
+			llnode_add(&ll, &end);
+
+			struct array *output = NULL;
+			array_new(&output, ll);
+			llnode_free(ll);
+
+			struct packets *p = NULL;
+			packets_new(&p);
+			packets_pack(p, output);
+			array_free(output);
+
+			struct task *tmp = task_get(global_data->tboard->tasks, task_id);
+			packets_send(p, tmp->to_cmd);
+			packets_free(p);
+
 			taskboard_remove_tid(global_data->tboard, task_id, NULL);
+		}	
 	}
 }
 
