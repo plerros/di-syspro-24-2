@@ -14,7 +14,7 @@
 #include "queue.h"
 #include "llnode.h"
 #include "array.h"
-#include "fifopipe.h"
+#include "netpipe.h"
 #include "packet.h"
 #include "command.h"
 #include "task.h"
@@ -235,7 +235,7 @@ void assign_work(struct executor_data *exd)
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	// Set up signal handling
 	struct sigaction sa;
@@ -247,6 +247,9 @@ int main()
 	}
 	signal(SIGPIPE, SIG_IGN);
 
+	if (argc != 4)
+		return 1;
+
 	create_txt();
 
 	struct executor_data exd;
@@ -254,8 +257,8 @@ int main()
 	exd.handshake = NULL;
 
 	// Initialize named pipes
-	mkfifo_werr(HANDSHAKE);
-	ropipe_new(&(exd.handshake), HANDSHAKE);
+//	mkfifo_werr(HANDSHAKE);
+	ropipe_new(&(exd.handshake), argv[1]);
 
 	exd.tboard = NULL;
 	taskboard_new(&(exd.tboard));
@@ -326,6 +329,7 @@ int main()
 
 	block_sigchild(NULL); // Protect Taskboard_free
 	taskboard_free(exd.tboard);
+	ropipe_close(exd.handshake);
 	ropipe_free(exd.handshake);
 	remove(HANDSHAKE);
 	remove(TXT_NAME);

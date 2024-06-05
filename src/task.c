@@ -6,7 +6,7 @@
 
 #include "array.h"
 #include "task.h"
-#include "fifopipe.h"
+#include "netpipe.h"
 
 void task_new(
 	struct task **ptr,

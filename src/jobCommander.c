@@ -8,7 +8,7 @@
 
 #include "llnode.h"
 #include "array.h"
-#include "fifopipe.h"
+#include "netpipe.h"
 #include "packet.h"
 #include "command.h"
 

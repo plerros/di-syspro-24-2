@@ -14,7 +14,7 @@
 #include "helper.h"
 #include "llnode.h"
 #include "array.h"
-#include "fifopipe.h"
+#include "netpipe.h"
 #include "packet.h"
 
 // INTERNAL PIPE FUNCTIONS
@@ -171,7 +171,7 @@ static void pipe_read(struct fifopipe *ptr, struct array **dst, size_t msg_size,
 }
 
 // WRITE ONLY PIPE
-
+/*
 void wopipe_new(struct wopipe **ptr, const char *name)
 {
 	OPTIONAL_ASSERT(ptr != NULL);
@@ -253,3 +253,4 @@ void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t
 
 	pipe_read(ptr->pipe, dst, msg_size, msg_count);
 }
+*/

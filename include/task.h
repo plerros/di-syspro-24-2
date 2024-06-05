@@ -6,7 +6,7 @@
 #include "configuration.h"
 
 #include "array.h"
-#include "fifopipe.h"
+#include "netpipe.h"
 
 struct task
 {

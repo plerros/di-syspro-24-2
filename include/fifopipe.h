@@ -6,7 +6,7 @@ struct fifopipe
 	char *name;
 	int fd;
 };
-
+/*
 struct wopipe
 {
 	struct fifopipe *pipe;
@@ -24,5 +24,5 @@ void wopipe_write(struct wopipe *ptr, struct array *src);
 void ropipe_new(struct ropipe **ptr, const char *name);
 void ropipe_free(struct ropipe *ptr);
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count);
-
+*/
 #endif /*SYSPROG24_2_FIFOPIPE_H*/

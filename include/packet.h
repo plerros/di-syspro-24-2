@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 #include "array.h"
-#include "fifopipe.h"
+#include "netpipe.h"
 
 struct packets
 {
