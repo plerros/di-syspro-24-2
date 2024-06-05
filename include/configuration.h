@@ -8,7 +8,7 @@
 
 #define HANDSHAKE "handshake"
 
-#define PACKET_SIZE 32
+#define PACKET_SIZE 64
 #define LINK_SIZE 100
 
 #define SAFETY_CHECKS true

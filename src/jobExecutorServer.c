@@ -250,14 +250,11 @@ int main(int argc, char *argv[])
 	if (argc != 4)
 		return 1;
 
-	create_txt();
-
 	struct executor_data exd;
 	global_data = &exd;
 	exd.handshake = NULL;
 
 	// Initialize named pipes
-//	mkfifo_werr(HANDSHAKE);
 	ropipe_new(&(exd.handshake), argv[1]);
 
 	exd.tboard = NULL;
@@ -277,30 +274,17 @@ int main(int argc, char *argv[])
 		packets_unpack(p, &arr);
 		packets_free(p);
 
-		char pid[100];
-		char tocmd_name[200];
-		char fromcmd_name[200];
-		pid[0] = '\0';
-		tocmd_name[0] = '\0';
-		fromcmd_name[0] = '\0';
+		struct handshake_t *hs_data = array_get(arr, 0);
 
-		for (size_t i = 0; i < array_get_size(arr); i++)
-			pid[i] = *((char *)array_get(arr, i));
-
-		array_free(arr);
-
-		if (pid[0] != '\0') {
-			sprintf(tocmd_name, "pipes/%s.tocmd", pid);
-			sprintf(fromcmd_name, "pipes/%s.toexec", pid);
-		}
-
-		mkfifo_werr(fromcmd_name);
-		mkfifo_werr(tocmd_name);
+		printf("%s\n", hs_data->ip);
+		printf("%s\n", hs_data->port_client_read);
+		printf("%s\n", hs_data->port_client_write);
 
 		exd.from_cmd = NULL;
 		exd.to_cmd   = NULL;
-		ropipe_new(&(exd.from_cmd), fromcmd_name);
-		wopipe_new(&(exd.to_cmd), tocmd_name);
+		ropipe_new(&(exd.from_cmd), "1444"); //TODO not static
+		wopipe_new(&(exd.to_cmd), hs_data->ip, hs_data->port_client_read);
+		array_free(arr);
 
 		p = NULL;
 		packets_new(&p);
@@ -318,6 +302,7 @@ int main(int argc, char *argv[])
 
 		ropipe_free(exd.from_cmd);
 		wopipe_free(exd.to_cmd);
+		ropipe_close(exd.handshake);
 	}
 
 	global_data = NULL;

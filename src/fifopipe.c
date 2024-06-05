@@ -18,7 +18,7 @@
 #include "packet.h"
 
 // INTERNAL PIPE FUNCTIONS
-
+/*
 static void pipe_new(struct fifopipe **ptr, const char *name)
 {
 	OPTIONAL_ASSERT(ptr != NULL);
@@ -171,7 +171,7 @@ static void pipe_read(struct fifopipe *ptr, struct array **dst, size_t msg_size,
 }
 
 // WRITE ONLY PIPE
-/*
+
 void wopipe_new(struct wopipe **ptr, const char *name)
 {
 	OPTIONAL_ASSERT(ptr != NULL);

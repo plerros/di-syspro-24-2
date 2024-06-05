@@ -64,40 +64,29 @@ void reply_receive(struct ropipe *from_exec)
 
 int main(int argc, char *argv[])
 {
-	// Create Server Process if missing
-	if (access(TXT_NAME, F_OK) != 0) {
-		pid_t pid = fork();
-		if (pid < 0)
-			abort();
-
-		int rc = 0;
-		if (pid == 0)
-			rc = execl(SERVER_NAME, SERVER_NAME, NULL);
-		if (rc == -1) {
-			perror("ERROR");
-			exit(1);
-		}
-	}
-
-	wait_for_txt(10);
+	if (argc < 4)
+		return 1;
 
 	// Initialize handshake pipe
 	struct wopipe *handshake = NULL;
-	wopipe_new(&handshake, HANDSHAKE);
+	wopipe_new(&handshake, argv[1], argv[2]);
 
 	// Handshake
-	pid_t pid = getpid();
-	char myname[100];
-	char toexec_name[100];
-	char fromexec_name[100];
-	sprintf(myname, "%d", pid);
-	sprintf(toexec_name, "pipes/%d.toexec", pid);
-	sprintf(fromexec_name, "pipes/%d.tocmd", pid);
+	struct handshake_t hs_data;
+	sprintf(hs_data.ip, "127.0.0.1"); //TODO not static
+	sprintf(hs_data.port_client_read, "1093"); //TODO not static
+	sprintf(hs_data.port_client_write, "1094"); //TODO not static
 
 	struct llnode *ll = NULL;
 	llnode_new(&ll, sizeof(char), NULL);
-	for (size_t i = 0; i < strlen(myname) + 1; i++)
-		llnode_add(&ll, &(myname[i]));
+	for (size_t i = 0; i < sizeof(hs_data.ip); i++)
+		llnode_add(&ll, &(hs_data.ip[i]));
+
+	for (size_t i = 0; i < sizeof(hs_data.port_client_read); i++)
+		llnode_add(&ll, &(hs_data.port_client_read[i]));
+
+	for (size_t i = 0; i < sizeof(hs_data.port_client_write); i++)
+		llnode_add(&ll, &(hs_data.port_client_write[i]));
 
 	struct array *arr = NULL;
 	array_new(&arr, ll);
@@ -110,19 +99,17 @@ int main(int argc, char *argv[])
 	packets_send(p, handshake);
 	packets_free(p);
 
-	while (access(toexec_name, F_OK) != 0);
-
 	// Initialize pipes
 	struct wopipe *to_exec = NULL;
-	wopipe_new(&to_exec, toexec_name);
+	wopipe_new(&to_exec, argv[1], "1444"); //TODO not static
 	struct ropipe *from_exec = NULL;
-	ropipe_new(&from_exec, fromexec_name);
+	ropipe_new(&from_exec, hs_data.port_client_read);
 
 	// Parse args
 	ll = NULL;
 	llnode_new(&ll, sizeof(char), NULL);
 
-	for (int i = 1; i < argc; i++) {
+	for (int i = 3; i < argc; i++) {
 		for(size_t j = 0; j < strlen(argv[i]); j++) {
 			llnode_add(&ll, &(argv[i][j]));
 		}
@@ -165,7 +152,5 @@ int main(int argc, char *argv[])
 	wopipe_free(to_exec);
 	ropipe_free(from_exec);
 	wopipe_free(handshake);
-	remove(toexec_name);
-	remove(fromexec_name);
 	return 0;
 }

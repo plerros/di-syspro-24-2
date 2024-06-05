@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <signal.h>
@@ -15,7 +16,7 @@
 void netpipe_new(struct netpipe_t **ptr)
 {
 	struct netpipe_t *new = malloc(sizeof(struct netpipe_t));
-	if (new != NULL)
+	if (new == NULL)
 		abort();
 
 	struct addrinfo hints = {
@@ -141,6 +142,7 @@ void ropipe_new(struct ropipe **ptr, char *port)
 	};
 
 	bind(new->pipe->fd_acc, (struct sockaddr *)&(addr), sizeof(addr));
+	listen(new->pipe->fd_acc, 5);
 	*ptr = new;
 }
 
@@ -150,7 +152,27 @@ void ropipe_free(struct ropipe *ptr)
 		return;
 
 	netpipe_free(ptr->pipe);
+	free(ptr);
 }
+
+static int accept_werr(int fd, struct sockaddr *addr, socklen_t *len)
+{
+	int rc = accept(fd, NULL, NULL);
+	if (rc != -1)
+		return rc;
+
+	switch (errno) {
+		case EAGAIN:
+			break;
+		case EPIPE:
+			break;
+		default:
+			perror("ERROR");
+			exit(1);
+	}
+	return rc;
+}
+
 
 static void ropipe_accept(struct ropipe *ptr)
 {
@@ -162,7 +184,9 @@ static void ropipe_accept(struct ropipe *ptr)
 
 	struct sockaddr addr;
 	socklen_t len;
-	ptr->pipe->fd = accept(ptr->pipe->fd, &addr, &len);
+
+	while (ptr->pipe->fd == -1)
+		ptr->pipe->fd = accept_werr(ptr->pipe->fd_acc, &addr, &len);
 }
 
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count)
