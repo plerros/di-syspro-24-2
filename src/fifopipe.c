@@ -88,24 +88,6 @@ static void pipe_open(struct fifopipe *ptr, int flags)
 		abort();
 }
 
-ssize_t write_werr(int fd, void *buf, size_t count)
-{
-	ssize_t rc = write(fd, buf, count);
-	if (rc != -1)
-		return rc;
-
-	switch (errno) {
-		case EAGAIN:
-			break;
-		case EPIPE:
-			break;
-		default:
-			perror("ERROR");
-			exit(1);
-	}
-	return rc;
-}
-
 static void pipe_write(struct fifopipe *ptr, struct array *src)
 {
 	OPTIONAL_ASSERT(ptr != NULL);
@@ -127,32 +109,6 @@ static void pipe_write(struct fifopipe *ptr, struct array *src)
 				sum += (size_t)rc;
 		}
 	}
-}
-
-/*
- * read_werr()
- *
- * read with errors
- * auto-handle some errors to reduce clutter on parent function
- */
-
-ssize_t read_werr(int fd, void *buf, size_t count)
-{
-	if (fd == -1)
-		return 0;
-
-	ssize_t rc = read(fd, buf, count);
-	if (rc != -1)
-		return rc;
-
-	switch (errno) {
-		case EAGAIN:
-			break;
-		default:
-			perror("ERROR");
-			exit(1);
-	}
-	return rc;
 }
 
 void msg_print(

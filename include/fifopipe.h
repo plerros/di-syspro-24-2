@@ -1,8 +1,6 @@
 #ifndef SYSPROG24_2_FIFOPIPE_H
 #define SYSPROG24_2_FIFOPIPE_H
 
-enum pipe_type {readonly, writeonly};
-
 struct fifopipe
 {
 	char *name;
