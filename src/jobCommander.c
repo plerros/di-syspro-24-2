@@ -11,6 +11,7 @@
 #include "netpipe.h"
 #include "packet.h"
 #include "command.h"
+#include "handshake.h"
 
 void print_txtreadretry(int retries, int retries_max)
 {
@@ -71,22 +72,16 @@ int main(int argc, char *argv[])
 	struct wopipe *handshake = NULL;
 	wopipe_new(&handshake, argv[1], argv[2]);
 
+	struct ropipe *from_exec = NULL;
+	uint16_t port_input = ropipe_new(&from_exec, NULL);
+
+	printf("%d\n", port_input);
 	// Handshake
 	struct handshake_t hs_data;
-	sprintf(hs_data.ip, "127.0.0.1"); //TODO not static
-	sprintf(hs_data.port_client_read, "1093"); //TODO not static
-	sprintf(hs_data.port_client_write, "1094"); //TODO not static
+	handshake_init(&hs_data, "127.0.0.1", port_input); //TODO not static
 
 	struct llnode *ll = NULL;
-	llnode_new(&ll, sizeof(char), NULL);
-	for (size_t i = 0; i < sizeof(hs_data.ip); i++)
-		llnode_add(&ll, &(hs_data.ip[i]));
-
-	for (size_t i = 0; i < sizeof(hs_data.port_client_read); i++)
-		llnode_add(&ll, &(hs_data.port_client_read[i]));
-
-	for (size_t i = 0; i < sizeof(hs_data.port_client_write); i++)
-		llnode_add(&ll, &(hs_data.port_client_write[i]));
+	handshake_to_llnode(&hs_data, &ll);
 
 	struct array *arr = NULL;
 	array_new(&arr, ll);
@@ -99,11 +94,26 @@ int main(int argc, char *argv[])
 	packets_send(p, handshake);
 	packets_free(p);
 
-	// Initialize pipes
+	// Receive Handshake
+	p = NULL;
+	packets_new(&p);
+	packets_receive(p, from_exec);
+
+	arr = NULL;
+	packets_unpack(p, &arr);
+	packets_free(p);
+
 	struct wopipe *to_exec = NULL;
-	wopipe_new(&to_exec, argv[1], "1444"); //TODO not static
-	struct ropipe *from_exec = NULL;
-	ropipe_new(&from_exec, hs_data.port_client_read);
+	{
+		struct handshake_t *server_data = array_get(arr, 0);
+		printf("%s\n", server_data->ip);
+		printf("%s\n", server_data->port);
+		wopipe_new(&to_exec, server_data->ip, server_data->port);
+	}
+	array_free(arr);
+	p = NULL;
+
+	// Initialize pipes
 
 	// Parse args
 	ll = NULL;
@@ -137,15 +147,21 @@ int main(int argc, char *argv[])
 	packets_pack(p, arr);
 
 	// Send
+	printf("send\n");
 	packets_send(p, to_exec);
+	printf("a\n");
 	packets_free(p);
+	printf("b\n");
 
 	// Receive reply
 	reply_receive(from_exec);
+	printf("c\n");
 
 	// If we issued a Job, wait for the stdout to be returned
-	if (command_recognize(arr) == cmd_issueJob)
+	if (command_recognize(arr) == cmd_issueJob) {
+		printf("waiting\n");
 		reply_receive(from_exec);
+	}
 
 	array_free(arr);
 

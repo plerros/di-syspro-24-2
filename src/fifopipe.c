@@ -111,26 +111,6 @@ static void pipe_write(struct fifopipe *ptr, struct array *src)
 	}
 }
 
-void msg_print(
-	__attribute__((unused)) size_t msg_size,
-	__attribute__((unused)) ssize_t rc,
-	__attribute__((unused)) char *str)
-{
-	if (rc < 0)
-		return;
-
-#ifdef DEBUG
-	fprintf(stderr, "%ld / %ld: ", rc, msg_size);
-	for (size_t j = 0; j < msg_size; j++) {
-		if (isprint(str[j]))
-			fprintf(stderr, "%c", str[j]);
-		else
-			fprintf(stderr, ".");
-	}
-	fprintf(stderr, "\n");
-#endif
-}
-
 static void pipe_read(struct fifopipe *ptr, struct array **dst, size_t msg_size, size_t msg_count)
 {
 	OPTIONAL_ASSERT(ptr != NULL);

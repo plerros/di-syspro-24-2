@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -67,4 +68,24 @@ ssize_t write_werr(int fd, void *buf, size_t count)
 			exit(1);
 	}
 	return rc;
+}
+
+void msg_print(
+	__attribute__((unused)) size_t msg_size,
+	__attribute__((unused)) ssize_t rc,
+	__attribute__((unused)) char *str)
+{
+	if (rc < 0)
+		return;
+
+#ifdef DEBUG
+	fprintf(stderr, "%ld / %ld: ", rc, msg_size);
+	for (size_t j = 0; j < msg_size; j++) {
+		if (isprint(str[j]))
+			fprintf(stderr, "%c", str[j]);
+		else
+			fprintf(stderr, ".");
+	}
+	fprintf(stderr, "\n");
+#endif
 }

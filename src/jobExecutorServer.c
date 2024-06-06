@@ -19,6 +19,7 @@
 #include "command.h"
 #include "task.h"
 #include "taskboard.h"
+#include "handshake.h"
 
 void create_txt()
 {
@@ -196,6 +197,7 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 		llnode_free(ll);
 	}
 
+		printf("sending reply\n");
 	packets_pack(p, reply);
 	packets_send(p, exd->to_cmd);
 
@@ -255,7 +257,11 @@ int main(int argc, char *argv[])
 	exd.handshake = NULL;
 
 	// Initialize named pipes
-	ropipe_new(&(exd.handshake), argv[1]);
+	uint16_t hs_port = ropipe_new(&(exd.handshake), argv[1]);
+	if (hs_port != atoi(argv[1])) {
+		printf("Couldn't allocate port %s", argv[1]);
+		return 1;
+	}
 
 	exd.tboard = NULL;
 	taskboard_new(&(exd.tboard));
@@ -274,17 +280,36 @@ int main(int argc, char *argv[])
 		packets_unpack(p, &arr);
 		packets_free(p);
 
-		struct handshake_t *hs_data = array_get(arr, 0);
-
-		printf("%s\n", hs_data->ip);
-		printf("%s\n", hs_data->port_client_read);
-		printf("%s\n", hs_data->port_client_write);
-
 		exd.from_cmd = NULL;
 		exd.to_cmd   = NULL;
-		ropipe_new(&(exd.from_cmd), "1444"); //TODO not static
-		wopipe_new(&(exd.to_cmd), hs_data->ip, hs_data->port_client_read);
+		{	
+			struct handshake_t *client_data = array_get(arr, 0);
+
+			printf("%s\n", client_data->ip);
+			printf("%s\n", client_data->port);
+			wopipe_new(&(exd.to_cmd), client_data->ip, client_data->port);
+		}
 		array_free(arr);
+
+		{
+			uint16_t port_input = ropipe_new(&(exd.from_cmd), NULL);
+			struct handshake_t server_data;
+			handshake_init(&server_data, "127.0.0.1", port_input);
+
+			struct llnode *ll = NULL;
+			handshake_to_llnode(&server_data, &ll);
+
+			arr = NULL;
+			array_new(&arr, ll);
+			llnode_free(ll);
+		}
+
+		p = NULL;
+		packets_new(&p);
+		packets_pack(p, arr);
+		array_free(arr);
+		packets_send(p, exd.to_cmd);
+		packets_free(p);
 
 		p = NULL;
 		packets_new(&p);

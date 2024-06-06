@@ -248,8 +248,6 @@ void packets_receive(struct packets *ptr, struct ropipe *pipe)
 			tmp = NULL;
 		}
 	}
-	ropipe_close(pipe);
-
 	array_new(packets_getptr_packets(ptr), ll);
 	llnode_free(ll);
 }

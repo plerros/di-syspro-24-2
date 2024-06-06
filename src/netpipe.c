@@ -3,6 +3,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,7 @@
 #include "llnode.h"
 #include "array.h"
 #include "netpipe.h"
+#include "helper.h"
 
 void netpipe_new(struct netpipe_t **ptr)
 {
@@ -61,15 +63,12 @@ void netpipe_write(struct netpipe_t *ptr, struct array *src)
 	char *buf = (char *)array_get(src, 0);
 	size_t size = array_get_size(src) * array_get_elementsize(src);
 
-	ssize_t rc_signed   = write(ptr->fd, buf, size);
-	size_t  rc_unsigned = 0;
-	if (rc_signed > 0)
-		rc_unsigned = (size_t) rc_signed;
-
-	if (rc_unsigned == size)
-		return;
-
-	fprintf(stderr, "Write failed\n");
+	size_t sum = 0;
+	while (sum < size) {
+		ssize_t rc = write_werr(ptr->fd, buf, size - sum);
+		if (rc >= 0)
+			sum += (size_t)rc;
+	}
 }
 
 void netpipe_read(struct netpipe_t *ptr, struct array **dst, size_t msg_size, size_t msg_count)
@@ -88,7 +87,11 @@ void netpipe_read(struct netpipe_t *ptr, struct array **dst, size_t msg_size, si
 		abort();
 
 	for (size_t i = 0; i < msg_count; i++) {
-		read(ptr->fd, buf, msg_size);
+		ssize_t rc = read_werr(ptr->fd, buf, msg_size);
+		if ((size_t) rc != msg_size)
+			break;
+
+		msg_print(msg_size, rc, buf);
 		llnode_add(&ll, buf);
 	}
 
@@ -126,7 +129,29 @@ void wopipe_write(struct wopipe *ptr, struct array *src)
 	netpipe_write(ptr->pipe, src);
 }
 
-void ropipe_new(struct ropipe **ptr, char *port)
+
+int bind_werr(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+{
+	if (sockfd == -1)
+		return 0;
+
+	int rc = bind(sockfd, addr, addrlen);
+	if (rc != -1)
+		return rc;
+
+	switch (errno) {
+		case EACCES:
+			break;
+		case EADDRINUSE:
+			break;		
+		default:
+			perror("ERROR");
+			exit(1);
+	}
+	return rc;
+}
+
+uint16_t ropipe_new(struct ropipe **ptr, char *port)
 {
 	struct ropipe *new = malloc(sizeof(struct wopipe));
 	if (new == NULL)
@@ -134,16 +159,29 @@ void ropipe_new(struct ropipe **ptr, char *port)
 
 	netpipe_new(&(new->pipe));
 
-	uint16_t port_u16 = atoi(port);
-	struct sockaddr_in addr = {
-		.sin_family = new->pipe->hints.ai_family,
-		.sin_addr.s_addr = htonl(INADDR_ANY),
-		.sin_port = htons(port_u16)
-	};
+	uint16_t port_u16 = 1;
 
-	bind(new->pipe->fd_acc, (struct sockaddr *)&(addr), sizeof(addr));
+	if (port != NULL)
+		port_u16 = atoi(port);
+
+	for (; port_u16 < UINT16_MAX; port_u16++) {
+		struct sockaddr_in addr = {
+			.sin_family = new->pipe->hints.ai_family,
+			.sin_addr.s_addr = htonl(INADDR_ANY),
+			.sin_port = htons(port_u16)
+		};
+		int rc = bind_werr(
+			new->pipe->fd_acc,
+			(struct sockaddr *)&(addr),
+			sizeof(addr));
+
+		if (rc == 0)
+			break;
+	}
 	listen(new->pipe->fd_acc, 5);
 	*ptr = new;
+
+	return port_u16;
 }
 
 void ropipe_free(struct ropipe *ptr)

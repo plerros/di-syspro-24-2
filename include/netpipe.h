@@ -25,17 +25,9 @@ struct ropipe
 	struct netpipe_t *pipe;
 };
 
-void ropipe_new(struct ropipe **ptr, char *port);
+uint16_t ropipe_new(struct ropipe **ptr, char *port);
 void ropipe_free(struct ropipe *ptr);
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count);
 void ropipe_close(struct ropipe *ptr);
-
-
-struct handshake_t
-{
-	char ip[16];
-	char port_client_read[8];
-	char port_client_write[8];
-};
 
 #endif /* SYSPROG24_2_NETPIPE_H */
