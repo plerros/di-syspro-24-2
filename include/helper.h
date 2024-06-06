@@ -16,4 +16,6 @@ void msg_print(
 	__attribute__((unused)) size_t msg_size,
 	__attribute__((unused)) ssize_t rc,
 	__attribute__((unused)) char *str);
+
+void gethost(char *host);
 #endif /*SYSPROG24_2_HELPER_H*/

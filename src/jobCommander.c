@@ -12,6 +12,7 @@
 #include "packet.h"
 #include "command.h"
 #include "handshake.h"
+#include "helper.h"
 
 void print_txtreadretry(int retries, int retries_max)
 {
@@ -77,8 +78,11 @@ int main(int argc, char *argv[])
 
 	printf("%d\n", port_input);
 	// Handshake
+	char host[NI_MAXHOST];
+	gethost(host);
+
 	struct handshake_t hs_data;
-	handshake_init(&hs_data, "127.0.0.1", port_input); //TODO not static
+	handshake_init(&hs_data, host, port_input); //TODO not static
 
 	struct llnode *ll = NULL;
 	handshake_to_llnode(&hs_data, &ll);
@@ -147,21 +151,15 @@ int main(int argc, char *argv[])
 	packets_pack(p, arr);
 
 	// Send
-	printf("send\n");
 	packets_send(p, to_exec);
-	printf("a\n");
 	packets_free(p);
-	printf("b\n");
 
 	// Receive reply
 	reply_receive(from_exec);
-	printf("c\n");
 
 	// If we issued a Job, wait for the stdout to be returned
-	if (command_recognize(arr) == cmd_issueJob) {
-		printf("waiting\n");
+	if (command_recognize(arr) == cmd_issueJob)
 		reply_receive(from_exec);
-	}
 
 	array_free(arr);
 

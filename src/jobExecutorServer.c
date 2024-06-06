@@ -292,9 +292,12 @@ int main(int argc, char *argv[])
 		array_free(arr);
 
 		{
+			char host[NI_MAXHOST];
+			gethost(host);
+
 			uint16_t port_input = ropipe_new(&(exd.from_cmd), NULL);
 			struct handshake_t server_data;
-			handshake_init(&server_data, "127.0.0.1", port_input);
+			handshake_init(&server_data, host, port_input);
 
 			struct llnode *ll = NULL;
 			handshake_to_llnode(&server_data, &ll);

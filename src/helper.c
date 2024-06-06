@@ -1,5 +1,7 @@
 #include <ctype.h>
 #include <errno.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -88,4 +90,43 @@ void msg_print(
 	}
 	fprintf(stderr, "\n");
 #endif
+}
+
+void gethost(char *host)
+{
+	struct ifaddrs *ifap;
+	int rc = getifaddrs(&ifap);
+	if (rc == -1) {
+		perror("ERROR");
+		exit(1);
+	}
+
+	struct ifaddrs *i = ifap;
+	host[0] = '\0';
+
+	for (; i != NULL; i = i->ifa_next) {
+		// Ignore loopback
+		if (strcmp(i->ifa_name, "lo") == 0)
+			continue;
+
+		int family = i->ifa_addr->sa_family;
+
+		if (family != AF_INET)
+			continue;
+
+		int s = getnameinfo(i->ifa_addr, sizeof(struct sockaddr_in),
+			host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+		if (s != 0) {
+			printf("getnameinfo() failed: %s\n", gai_strerror(s));
+			exit(1);
+		}
+#ifdef DEBUG
+		printf("<Interface>: %s \t <Address> %s\n", i->ifa_name, host);
+#endif
+		break;
+
+	}
+	free(ifap);
+	if (host[0] == '\0')
+		sprintf(host, "127.0.0.1");
 }
