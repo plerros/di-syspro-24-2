@@ -76,7 +76,6 @@ int main(int argc, char *argv[])
 	struct ropipe *from_exec = NULL;
 	uint16_t port_input = ropipe_new(&from_exec, NULL);
 
-	printf("%d\n", port_input);
 	// Handshake
 	char host[NI_MAXHOST];
 	gethost(host);
@@ -110,8 +109,7 @@ int main(int argc, char *argv[])
 	struct wopipe *to_exec = NULL;
 	{
 		struct handshake_t *server_data = array_get(arr, 0);
-		printf("%s\n", server_data->ip);
-		printf("%s\n", server_data->port);
+		handshake_print(server_data);
 		wopipe_new(&to_exec, server_data->ip, server_data->port);
 	}
 	array_free(arr);

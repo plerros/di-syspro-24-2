@@ -36,3 +36,10 @@ void handshake_to_llnode(struct handshake_t *ptr, struct llnode **dst)
 	for (size_t i = 0; i < sizeof(tmp.port); i++)
 		llnode_add(dst, &(ptr->port[i]));
 }
+
+void handshake_print(struct handshake_t *ptr)
+{
+#ifdef DEBUG
+	printf("%s:%s\n", ptr->ip, ptr->port);
+#endif
+}

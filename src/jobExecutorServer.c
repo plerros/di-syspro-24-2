@@ -197,7 +197,6 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 		llnode_free(ll);
 	}
 
-		printf("sending reply\n");
 	packets_pack(p, reply);
 	packets_send(p, exd->to_cmd);
 
@@ -284,9 +283,7 @@ int main(int argc, char *argv[])
 		exd.to_cmd   = NULL;
 		{	
 			struct handshake_t *client_data = array_get(arr, 0);
-
-			printf("%s\n", client_data->ip);
-			printf("%s\n", client_data->port);
+			handshake_print(client_data);
 			wopipe_new(&(exd.to_cmd), client_data->ip, client_data->port);
 		}
 		array_free(arr);
