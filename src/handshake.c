@@ -37,7 +37,7 @@ void handshake_to_llnode(struct handshake_t *ptr, struct llnode **dst)
 		llnode_add(dst, &(ptr->port[i]));
 }
 
-void handshake_print(struct handshake_t *ptr)
+void handshake_print(__attribute__((unused)) struct handshake_t *ptr)
 {
 #ifdef DEBUG
 	printf("%s:%s\n", ptr->ip, ptr->port);

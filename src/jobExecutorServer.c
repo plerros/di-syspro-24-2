@@ -209,18 +209,6 @@ skip:
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
-void mkfifo_werr(char *str)
-{
-	if (strlen(str) == 0)
-		return;
-
-	int rc = mkfifo(str, 0600);
-	if (rc == -1){
-		perror("ERROR");
-		exit(1);
-	}
-}
-
 void assign_work(struct executor_data *exd)
 {
 	sigset_t oldmask;
@@ -283,8 +271,10 @@ int main(int argc, char *argv[])
 		exd.to_cmd   = NULL;
 		{	
 			struct handshake_t *client_data = array_get(arr, 0);
-			handshake_print(client_data);
-			wopipe_new(&(exd.to_cmd), client_data->ip, client_data->port);
+			if (client_data != NULL) {
+				handshake_print(client_data);
+				wopipe_new(&(exd.to_cmd), client_data->ip, client_data->port);
+			}
 		}
 		array_free(arr);
 

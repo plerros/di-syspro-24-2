@@ -48,7 +48,7 @@ ssize_t read_werr(int fd, void *buf, size_t count)
 		case EAGAIN:
 			break;
 		default:
-			perror("ERROR");
+			perror("ERROR: read");
 			exit(1);
 	}
 	return rc;
@@ -56,6 +56,9 @@ ssize_t read_werr(int fd, void *buf, size_t count)
 
 ssize_t write_werr(int fd, void *buf, size_t count)
 {
+	if (fd == -1)
+		return 0;
+
 	ssize_t rc = write(fd, buf, count);
 	if (rc != -1)
 		return rc;
@@ -66,7 +69,7 @@ ssize_t write_werr(int fd, void *buf, size_t count)
 		case EPIPE:
 			break;
 		default:
-			perror("ERROR");
+			perror("ERROR: write");
 			exit(1);
 	}
 	return rc;
@@ -97,7 +100,7 @@ void gethost(char *host)
 	struct ifaddrs *ifap;
 	int rc = getifaddrs(&ifap);
 	if (rc == -1) {
-		perror("ERROR");
+		perror("ERROR: getifaddrs");
 		exit(1);
 	}
 

@@ -1,8 +1,11 @@
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +17,48 @@
 #include "array.h"
 #include "netpipe.h"
 #include "helper.h"
+
+__attribute__((unused))
+static void set_nonblock(int fd)
+{
+	if (fd == -1)
+		return;
+
+	int flags = fcntl(fd, F_GETFL);
+	flags = flags | O_NONBLOCK;
+
+	int rc = fcntl(fd, F_SETFL, flags);
+	if (rc >= 0)
+		return;
+	
+	perror("ERROR: fcntl");
+	exit(1);
+}
+
+static int netpipe_get_fdacc(struct netpipe_t *ptr)
+{
+	if (ptr == NULL)
+		return -1;
+	
+	return (ptr->fd_acc);
+}
+
+static int netpipe_get_fd(struct netpipe_t *ptr)
+{
+	if (ptr == NULL)
+		return -1;
+	
+	return (ptr->fd);
+}
+
+static void netpipe_set_fd(struct netpipe_t *ptr, int fd)
+{
+	OPTIONAL_ASSERT(ptr != NULL);
+	if (ptr == NULL)
+		return;
+	
+	ptr->fd = fd;
+}
 
 void netpipe_new(struct netpipe_t **ptr)
 {
@@ -43,21 +88,25 @@ void netpipe_free(struct netpipe_t *ptr)
 	if (ptr == NULL)
 		return;
 
-	if (ptr->fd_acc  == ptr->fd)
-		ptr->fd = -1;
+	if (netpipe_get_fdacc(ptr) == netpipe_get_fd(ptr))
+		netpipe_set_fd(ptr, -1);
 
-	if (ptr->fd_acc != -1)
-		close(ptr->fd_acc);
+	if (netpipe_get_fdacc(ptr) != -1)
+		close(netpipe_get_fdacc(ptr));
 
-	if (ptr->fd != -1)
-		close(ptr->fd);
+	if (netpipe_get_fd(ptr) != -1)
+		close(netpipe_get_fd(ptr));
 
 	free(ptr);
 }
 
 void netpipe_write(struct netpipe_t *ptr, struct array *src)
 {
-	if (ptr->fd == -1)
+	OPTIONAL_ASSERT(ptr != NULL);
+	if (ptr == NULL)
+		return;
+
+	if (netpipe_get_fd(ptr) == -1)
 		return;
 
 	char *buf = (char *)array_get(src, 0);
@@ -65,18 +114,25 @@ void netpipe_write(struct netpipe_t *ptr, struct array *src)
 
 	size_t sum = 0;
 	while (sum < size) {
-		ssize_t rc = write_werr(ptr->fd, buf, size - sum);
+		ssize_t rc = write_werr(netpipe_get_fd(ptr), buf, size - sum);
 		if (rc >= 0)
 			sum += (size_t)rc;
+
+		msg_print(size, rc, buf);
 	}
 }
 
-void netpipe_read(struct netpipe_t *ptr, struct array **dst, size_t msg_size, size_t msg_count)
+void netpipe_read(
+	struct netpipe_t *ptr,
+	struct array **dst,
+	size_t msg_size,
+	size_t msg_count)
 {
+	OPTIONAL_ASSERT(ptr != NULL);
 	if (ptr == NULL)
 		return;
 
-	if (ptr->fd == -1)
+	if (netpipe_get_fd(ptr) == -1)
 		return;
 
 	struct llnode *ll = NULL;
@@ -87,7 +143,7 @@ void netpipe_read(struct netpipe_t *ptr, struct array **dst, size_t msg_size, si
 		abort();
 
 	for (size_t i = 0; i < msg_count; i++) {
-		ssize_t rc = read_werr(ptr->fd, buf, msg_size);
+		ssize_t rc = read_werr(netpipe_get_fd(ptr), buf, msg_size);
 		if ((size_t) rc != msg_size)
 			break;
 
@@ -108,10 +164,12 @@ void wopipe_new(struct wopipe **ptr, char *name, char *port)
 
 	new->pipe = NULL;
 	netpipe_new(&(new->pipe));
-	new->pipe->fd = new->pipe->fd_acc;
+	netpipe_set_fd(new->pipe, netpipe_get_fdacc(new->pipe));
 
 	getaddrinfo(name, port, &(new->pipe->hints), &(new->addr));
-	connect(new->pipe->fd, new->addr->ai_addr, new->addr->ai_addrlen);
+
+	int fd = netpipe_get_fd(new->pipe);
+	connect(fd, new->addr->ai_addr, new->addr->ai_addrlen);
 	*ptr = new;
 }
 
@@ -126,6 +184,9 @@ void wopipe_free(struct wopipe *ptr)
 }
 void wopipe_write(struct wopipe *ptr, struct array *src)
 {
+	if (ptr == NULL)
+		return;
+
 	netpipe_write(ptr->pipe, src);
 }
 
@@ -145,7 +206,7 @@ int bind_werr(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 		case EADDRINUSE:
 			break;		
 		default:
-			perror("ERROR");
+			perror("ERROR: bind");
 			exit(1);
 	}
 	return rc;
@@ -171,14 +232,14 @@ uint16_t ropipe_new(struct ropipe **ptr, char *port)
 			.sin_port = htons(port_u16)
 		};
 		int rc = bind_werr(
-			new->pipe->fd_acc,
+			netpipe_get_fdacc(new->pipe),
 			(struct sockaddr *)&(addr),
 			sizeof(addr));
 
 		if (rc == 0)
 			break;
 	}
-	listen(new->pipe->fd_acc, 5);
+	listen(netpipe_get_fdacc(new->pipe), 5);
 	*ptr = new;
 
 	return port_u16;
@@ -205,39 +266,89 @@ static int accept_werr(int fd, struct sockaddr *addr, socklen_t *len)
 		case EPIPE:
 			break;
 		default:
-			perror("ERROR");
+			perror("ERROR: accept");
 			exit(1);
 	}
 	return rc;
 }
-
 
 static void ropipe_accept(struct ropipe *ptr)
 {
 	if (ptr == NULL)
 		return;
 
-	if (ptr->pipe->fd != -1)
+	if (netpipe_get_fd(ptr->pipe) != -1)
 		return;
 
 	struct sockaddr addr;
 	socklen_t len;
 
-	while (ptr->pipe->fd == -1)
-		ptr->pipe->fd = accept_werr(ptr->pipe->fd_acc, &addr, &len);
+	while (netpipe_get_fd(ptr->pipe) == -1)
+		netpipe_set_fd(ptr->pipe, accept_werr(netpipe_get_fdacc(ptr->pipe), &addr, &len));
+}
+
+bool pollin_check(int fd, int timeout)
+{
+	if (fd == -1)
+		return false;
+
+	struct pollfd pfd = {
+		.fd = fd,
+		.events = POLLIN | POLLERR | POLLHUP,
+		.revents = POLLIN | POLLERR | POLLHUP
+	};
+
+	int rc = poll(&pfd, 1, timeout);
+	if (rc < 0) {
+		perror("ERROR: poll");
+		exit(1);
+	}
+
+	if (pfd.revents & POLLIN) {
+		printf("Received Data\n");
+		return true;
+	}
+
+	if (pfd.revents & (POLLERR | POLLHUP))
+		printf("Socket was closed\n");
+	else
+		printf("NoData\n");
+
+	return false;
 }
 
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count)
 {
-	ropipe_accept(ptr);
-	netpipe_read(ptr->pipe, dst, msg_size, msg_count);
+	sigset_t oldmask;
+	block_sigchild(&oldmask);
+
+	int fd_acc = netpipe_get_fdacc(ptr->pipe);
+	int fd     = netpipe_get_fd(ptr->pipe);
+	bool fd_acc_pollin = false;
+	bool fd_pollin     = false;
+
+	// POLL fd_acc
+	if (fd_acc != -1 && fd == -1)
+		fd_acc_pollin = pollin_check(fd_acc, 1000);
+
+	if (fd_acc_pollin)
+		ropipe_accept(ptr);
+
+	fd = netpipe_get_fd(ptr->pipe);
+	if (fd != -1)
+		fd_pollin = pollin_check(fd, 1000);
+
+	if (fd_pollin)
+		netpipe_read(ptr->pipe, dst, msg_size, msg_count);
+
+	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }
 
 void ropipe_close(struct ropipe *ptr)
 {
-	if (ptr->pipe->fd == -1)
+	if (netpipe_get_fd(ptr->pipe) == -1)
 		return;
 
-	close(ptr->pipe->fd);
-	ptr->pipe->fd = -1;
+	close(netpipe_get_fd(ptr->pipe));
+	netpipe_set_fd(ptr->pipe ,-1);
 }

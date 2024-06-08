@@ -12,5 +12,5 @@ struct handshake_t
 void handshake_init(struct handshake_t *ptr, char *ip, uint16_t port);
 void handshake_to_llnode(struct handshake_t *ptr, struct llnode **dst);
 
-void handshake_print(struct handshake_t *ptr);
+void handshake_print(__attribute__((unused)) struct handshake_t *ptr);
 #endif /* SYSPROG24_2_HANDSHAKE_H */
