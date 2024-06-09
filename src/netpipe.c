@@ -263,7 +263,7 @@ uint16_t ropipe_get_port(struct ropipe *ptr)
 
 static int accept_werr(int fd, struct sockaddr *addr, socklen_t *len)
 {
-	int rc = accept(fd, NULL, NULL);
+	int rc = accept(fd, addr, len);
 	if (rc != -1)
 		return rc;
 
@@ -287,11 +287,8 @@ static void ropipe_accept(struct ropipe *ptr)
 	if (netpipe_get_fd(ptr->pipe) != -1)
 		return;
 
-	struct sockaddr addr;
-	socklen_t len;
-
 	while (netpipe_get_fd(ptr->pipe) == -1)
-		netpipe_set_fd(ptr->pipe, accept_werr(netpipe_get_fdacc(ptr->pipe), &addr, &len));
+		netpipe_set_fd(ptr->pipe, accept_werr(netpipe_get_fdacc(ptr->pipe), NULL, NULL));
 }
 
 bool pollin_check(int fd, int timeout)
@@ -312,14 +309,18 @@ bool pollin_check(int fd, int timeout)
 	}
 
 	if (pfd.revents & POLLIN) {
+#ifdef DEBUG
 		printf("Received Data\n");
+#endif
 		return true;
 	}
 
+#ifdef DEBUG
 	if (pfd.revents & (POLLERR | POLLHUP))
 		printf("Socket was closed\n");
 	else
 		printf("NoData\n");
+#endif
 
 	return false;
 }

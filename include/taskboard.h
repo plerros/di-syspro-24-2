@@ -7,6 +7,7 @@
 
 #include "llnode.h"
 #include "array.h"
+#include "netpipe.h"
 
 struct taskboard
 {

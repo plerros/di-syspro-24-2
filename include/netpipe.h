@@ -3,6 +3,8 @@
 
 #include <netdb.h>
 
+#include "array.h"
+
 struct netpipe_t
 {
 	struct addrinfo hints;
