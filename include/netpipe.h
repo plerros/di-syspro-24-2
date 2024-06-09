@@ -23,10 +23,12 @@ void wopipe_write(struct wopipe *ptr, struct array *src);
 struct ropipe
 {
 	struct netpipe_t *pipe;
+	uint16_t port;
 };
 
-uint16_t ropipe_new(struct ropipe **ptr, char *port);
+void ropipe_new(struct ropipe **ptr, char *port);
 void ropipe_free(struct ropipe *ptr);
+uint16_t ropipe_get_port(struct ropipe *ptr);
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count);
 void ropipe_close(struct ropipe *ptr);
 

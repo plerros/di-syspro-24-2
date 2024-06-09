@@ -244,9 +244,9 @@ int main(int argc, char *argv[])
 	exd.handshake = NULL;
 
 	// Initialize named pipes
-	uint16_t hs_port = ropipe_new(&(exd.handshake), argv[1]);
-	if (hs_port != atoi(argv[1])) {
-		printf("Couldn't allocate port %s", argv[1]);
+	ropipe_new(&(exd.handshake), argv[1]);
+	if (ropipe_get_port(exd.handshake) != atoi(argv[1])) {
+		printf("Couldn't allocate port %s\n", argv[1]);
 		return 1;
 	}
 
@@ -282,9 +282,9 @@ int main(int argc, char *argv[])
 			char host[NI_MAXHOST];
 			gethost(host);
 
-			uint16_t port_input = ropipe_new(&(exd.from_cmd), NULL);
+			ropipe_new(&(exd.from_cmd), NULL);
 			struct handshake_t server_data;
-			handshake_init(&server_data, host, port_input);
+			handshake_init(&server_data, host, ropipe_get_port(exd.from_cmd));
 
 			struct llnode *ll = NULL;
 			handshake_to_llnode(&server_data, &ll);

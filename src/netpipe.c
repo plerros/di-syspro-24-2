@@ -212,7 +212,7 @@ int bind_werr(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 	return rc;
 }
 
-uint16_t ropipe_new(struct ropipe **ptr, char *port)
+void ropipe_new(struct ropipe **ptr, char *port)
 {
 	struct ropipe *new = malloc(sizeof(struct wopipe));
 	if (new == NULL)
@@ -220,16 +220,16 @@ uint16_t ropipe_new(struct ropipe **ptr, char *port)
 
 	netpipe_new(&(new->pipe));
 
-	uint16_t port_u16 = 1;
+	new->port = 1;
 
 	if (port != NULL)
-		port_u16 = atoi(port);
+		new->port = atoi(port);
 
-	for (; port_u16 < UINT16_MAX; port_u16++) {
+	for (; new->port < UINT16_MAX; (new->port)++) {
 		struct sockaddr_in addr = {
 			.sin_family = new->pipe->hints.ai_family,
 			.sin_addr.s_addr = htonl(INADDR_ANY),
-			.sin_port = htons(port_u16)
+			.sin_port = htons(new->port)
 		};
 		int rc = bind_werr(
 			netpipe_get_fdacc(new->pipe),
@@ -241,8 +241,6 @@ uint16_t ropipe_new(struct ropipe **ptr, char *port)
 	}
 	listen(netpipe_get_fdacc(new->pipe), 5);
 	*ptr = new;
-
-	return port_u16;
 }
 
 void ropipe_free(struct ropipe *ptr)
@@ -252,6 +250,15 @@ void ropipe_free(struct ropipe *ptr)
 
 	netpipe_free(ptr->pipe);
 	free(ptr);
+}
+
+uint16_t ropipe_get_port(struct ropipe *ptr)
+{
+	OPTIONAL_ASSERT(ptr != NULL);
+	if (ptr == NULL)
+		abort();
+
+	return (ptr->port);
 }
 
 static int accept_werr(int fd, struct sockaddr *addr, socklen_t *len)

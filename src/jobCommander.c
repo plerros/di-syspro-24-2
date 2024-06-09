@@ -66,22 +66,26 @@ void reply_receive(struct ropipe *from_exec)
 
 int main(int argc, char *argv[])
 {
-	if (argc < 4)
-		return 1;
+	char *arg_addr = NULL;
+	if (argc > 1)
+		arg_addr = argv[1];
+
+	char *arg_port = NULL;
+	if (argc > 2)
+		arg_port = argv[2];
+
+	struct ropipe *from_exec = NULL;
+	ropipe_new(&from_exec, NULL);
 
 	// Initialize handshake pipe
 	struct wopipe *handshake = NULL;
-	wopipe_new(&handshake, argv[1], argv[2]);
+	wopipe_new(&handshake, arg_addr, arg_port);
 
-	struct ropipe *from_exec = NULL;
-	uint16_t port_input = ropipe_new(&from_exec, NULL);
-
-	// Handshake
 	char host[NI_MAXHOST];
 	gethost(host);
 
 	struct handshake_t hs_data;
-	handshake_init(&hs_data, host, port_input); //TODO not static
+	handshake_init(&hs_data, host, ropipe_get_port(from_exec));
 
 	struct llnode *ll = NULL;
 	handshake_to_llnode(&hs_data, &ll);
