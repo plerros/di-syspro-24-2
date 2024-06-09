@@ -18,4 +18,6 @@
  * Stray away from the requested implementation for more speed!
  */
 
+#define LOCALHOST_ONLY false
+
 #endif /*SYSPROG24_2_CONFIGURATION_H*/

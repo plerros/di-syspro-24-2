@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "configuration.h"
 #include "configuration_adv.h"
 #include "helper.h"
 
@@ -130,6 +131,6 @@ void gethost(char *host)
 
 	}
 	free(ifap);
-	if (host[0] == '\0')
+	if (host[0] == '\0' || LOCALHOST_ONLY)
 		sprintf(host, "127.0.0.1");
 }
