@@ -131,7 +131,7 @@ void executor_processcmd(struct executor_data *exd, struct array *command)
 	packets_new(&p);
 
 	switch (command_recognize(command)) {
-		case cmd_empty:
+		case cmd_NULL:
 			goto skip;
 
 		case cmd_invalid:

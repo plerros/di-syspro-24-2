@@ -4,7 +4,7 @@
 enum command_types
 {
 	cmd_invalid,
-	cmd_empty,
+	cmd_NULL,
 	cmd_issueJob,
 	cmd_setConcurrency,
 	cmd_stop,

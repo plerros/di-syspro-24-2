@@ -21,7 +21,7 @@ struct cmd
 
 struct cmd commands[] = {
 	{"",                cmd_invalid,        false},
-	{"",                cmd_empty,          true},
+	{"",                cmd_NULL,          true},
 	{"issueJob ",       cmd_issueJob,       false},
 	{"setConcurrency ", cmd_setConcurrency, false},
 	{"stop job_",       cmd_stop,           false},
@@ -33,6 +33,9 @@ struct cmd commands[] = {
 
 int command_recognize(struct array *arr)
 {
+	if (array_get(arr, 0) == NULL)
+		return cmd_NULL;
+
 	size_t arr_total_len = array_get_elementsize(arr) * array_get_size(arr);
 
 	char empty[] = "\0";
@@ -43,7 +46,7 @@ int command_recognize(struct array *arr)
 		arr_total_len = 1;
 	}
 
-	for (size_t i = cmd_empty; i <= cmd_exit; i++) {
+	for (size_t i = cmd_issueJob; i <= cmd_exit; i++) {
 		size_t len = strlen(commands[i].name);
 		if (commands[i].exact_length)
 			len++;
@@ -71,7 +74,7 @@ void command_strip(struct array *arr, struct array **ret)
 	size_t command_length = 0;
 
 	switch(command_recognize(arr)) {
-		case cmd_empty:
+		case cmd_NULL:
 			break;
 		case cmd_invalid:
 			break;
