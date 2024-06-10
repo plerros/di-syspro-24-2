@@ -18,4 +18,6 @@ size_t array_get_size(struct array *ptr);
 size_t array_get_elementsize(struct array *ptr);
 void array_print_str(struct array *arr);
 void array_copy(struct array *src, struct array **dst);
+
+void form_reply(struct array **reply, char *str);
 #endif /*SYSPROG24_2_ARRAY_H*/

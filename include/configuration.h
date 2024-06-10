@@ -20,4 +20,6 @@
 
 #define LOCALHOST_ONLY false
 
+#define STOP_RUNNING_JOBS false
+
 #endif /*SYSPROG24_2_CONFIGURATION_H*/

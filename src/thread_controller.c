@@ -74,10 +74,14 @@ void processcmd(struct controller_data_t *ptr, struct array *command)
 			break;
 		}
 
-		case cmd_setConcurrency:
+		case cmd_setConcurrency: {
 			update_concurrency(&(ptr->exd->concurrency), stripped);
 			printf("New concurrency: %u\n", ptr->exd->concurrency);
+			char str[100] = "\0";
+			sprintf(str, "CONCURRENCY_SET_AT %u", ptr->exd->concurrency);
+			form_reply(&reply, str);
 			break;
+		}
 
 		case cmd_stop: {
 			size_t task_id = array_to_u(stripped);
@@ -115,16 +119,8 @@ void processcmd(struct controller_data_t *ptr, struct array *command)
 	if (array_get(reply, 0) == NULL) {
 		array_free(reply);
 		reply = NULL;
-
-		struct llnode *ll = NULL;
 		char ack[] = "ack";
-		llnode_new(&ll, sizeof(char), NULL);
-
-		for (size_t i = 0; i < strlen(ack) + 1; i++)
-			llnode_add(&ll, &(ack[i]));
-
-		array_new(&reply, ll);
-		llnode_free(ll);
+		form_reply(&reply, ack);
 	}
 
 	packets_pack(p, reply);
@@ -179,13 +175,15 @@ void *controller_fn(void *void_args)
 	struct controller_data_t *data = (struct controller_data_t *)void_args;
 
 	bool command_submitted = false;
-	while (!command_submitted) {
-		ed_enter_write(data->exd);
+	bool exit_flag = false;
 
-		bool issueJob = false;
-		if (command_recognize(data->command) == cmd_issueJob) {
-			issueJob = true;
-		}
+	bool issueJob = false;
+	if (command_recognize(data->command) == cmd_issueJob) {
+		issueJob = true;
+	}
+
+	while (!command_submitted && !exit_flag) {
+		ed_enter_write(data->exd);
 
 		size_t jobs = 0;
 		if (issueJob) {
@@ -199,8 +197,37 @@ void *controller_fn(void *void_args)
 			command_submitted = true;
 		}
 
-		ed_exit_write(data->exd, NULL);
+		ed_exit_write(data->exd, &exit_flag);
 		sleep(1);
+	}
+
+	if (exit_flag && !command_submitted) {
+		char str1[] = "SERVER TERMINATED BEFORE EXECUTION";
+		char str2[] = "ack";
+
+		struct array *reply = NULL;
+		struct packets *p = NULL;
+
+		form_reply(&reply, str1);
+		packets_new(&p);
+		packets_pack(p, reply);
+		array_free(reply);
+		reply = NULL;
+
+		packets_send(p, data->to_cmd);
+		packets_free(p);
+		p = NULL;
+
+		if (issueJob) {
+			form_reply(&reply, str2);
+			packets_new(&p);
+			packets_pack(p, reply);
+			array_free(reply);
+			reply = NULL;
+
+			packets_send(p, data->to_cmd);
+			packets_free(p);
+		}
 	}
 
 	controller_data_free(data);

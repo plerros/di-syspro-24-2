@@ -8,6 +8,7 @@
 #include "configuration.h"
 
 #include "helper.h"
+#include "array.h"
 #include "task.h"
 #include "taskboard.h"
 
@@ -110,22 +111,16 @@ out:
 	else
 		printf("Can't insert job\n");
 
-	struct llnode *ll = NULL;
-	llnode_new(&ll, sizeof(char), NULL);
-
-	for (size_t i = 0; i < strlen(str) + 1; i++)
-		llnode_add(&ll, &(str[i]));
-
-	if (reply != NULL)
-		array_new(reply, ll);
-
-	llnode_free(ll);
+	form_reply(reply, str);
 
 	return ret;
 }
 
 void taskboard_addnow(struct taskboard *ptr)
 {
+	if (ptr == NULL)
+		return;
+
 	if (ptr->addlater == NULL)
 		return;
 
@@ -147,45 +142,42 @@ void taskboard_addnow(struct taskboard *ptr)
 	ptr->addlater = NULL;
 }
 
-void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **reply)
+struct array *taskboard_get_tasks(struct taskboard *ptr)
 {
 	if (ptr == NULL)
-		return;
+		return NULL;
 
-	if (tid >= array_get_size(ptr->tasks))
-		return;
+	return (ptr->tasks);
+}
 
+void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **reply)
+{
 	sigset_t oldmask;
 	block_sigchild(&oldmask);
 
 	taskboard_addnow(ptr);
 
-	struct task *tmp = task_get(ptr->tasks, tid);
-	if (tmp == NULL)
-		abort();
+	struct task *tmp = task_get(taskboard_get_tasks(ptr), tid);
 
 	// Form reply
 	char str[100];
 	str[0] = '\0';
 
-	if (task_iswaiting(tmp))
-		sprintf(str, "job_%lu removed", tmp->taskid);
+	sprintf(str, "JOB_%lu NOTFOUND", tid);
 
-	if (task_isrunning(tmp))
-		sprintf(str, "job_%lu terminated", tmp->taskid);
+	if (task_iswaiting(tmp)) {
+		sprintf(str, "JOB_%lu REMOVED", tmp->taskid);
+		task_end(tmp);
+	}
 
-	struct llnode *ll = NULL;
-	llnode_new(&ll, sizeof(char), NULL);
+#if (STOP_RUNNING_JOBS == true)
+	if (task_isrunning(tmp)) {
+		sprintf(str, "JOB_%lu TERMINATED", tmp->taskid);
+		task_end(tmp);
+	}
+#endif
 
-	for (size_t i = 0; i < strlen(str) + 1; i++)
-		llnode_add(&ll, &(str[i]));
-
-	if (reply != NULL)
-		array_new(reply, ll);
-
-	llnode_free(ll);
-
-	task_end(tmp);
+	form_reply(reply, str);
 
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
 }

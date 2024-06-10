@@ -124,3 +124,17 @@ void array_copy(struct array *src, struct array **dst)
 	new->data = arr;
 	*dst = new;
 }
+
+void form_reply(struct array **reply, char *str)
+{
+	struct llnode *ll = NULL;
+	llnode_new(&ll, sizeof(char), NULL);
+
+	for (size_t i = 0; i < strlen(str) + 1; i++)
+		llnode_add(&ll, &(str[i]));
+
+	if (reply != NULL)
+		array_new(reply, ll);
+
+	llnode_free(ll);
+}
