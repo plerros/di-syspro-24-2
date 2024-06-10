@@ -101,15 +101,8 @@ void processcmd(struct controller_data_t *ptr, struct array *command)
 
 		case cmd_exit: {
 			ptr->exd->exit_flag = true;
-			struct llnode *ll = NULL;
-			char terminated[] = "jobExecutorServer terminated";
-			llnode_new(&ll, sizeof(char), NULL);
-
-			for (size_t i = 0; i < strlen(terminated) + 1; i++)
-				llnode_add(&ll, &(terminated[i]));
-
-			array_new(&reply, ll);
-			llnode_free(ll);
+			char terminated[] = "SERVER_TERMINATED";
+			form_reply(&reply, terminated);
 			break;
 		}
 
@@ -183,6 +176,8 @@ void *controller_fn(void *void_args)
 	}
 
 	while (!command_submitted && !exit_flag) {
+		sigset_t oldmask;
+		block_sigchild(&oldmask);
 		ed_enter_write(data->exd);
 
 		size_t jobs = 0;
@@ -198,6 +193,7 @@ void *controller_fn(void *void_args)
 		}
 
 		ed_exit_write(data->exd, &exit_flag);
+		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 		sleep(1);
 	}
 

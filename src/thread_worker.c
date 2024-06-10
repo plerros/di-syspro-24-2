@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
+#include "helper.h"
 #include "executor_data.h"
 #include "thread_worker.h"
 
@@ -28,9 +29,12 @@ void *worker_fn(void *void_args)
 	struct worker_data_t *data = (struct worker_data_t *)void_args;
 
 	while (!(data->exit_flag)) {
+		sigset_t oldmask;
+		block_sigchild(&oldmask);
 		ed_enter_write(data->exd);
 		assign_work(data->exd);
 		ed_exit_write(data->exd, &(data->exit_flag));
+		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	}
 
 	worker_data_free(data);

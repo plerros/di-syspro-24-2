@@ -39,6 +39,8 @@ void sigchld_handler(__attribute__((unused))int sig)
 {
 	pid_t pid;
 	while((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+		ed_enter_write(global_data);
+
 		size_t task_id =  queue_find_pop(&(global_data->running), 0, pid);
 		if (task_id == 0)
 			continue;
@@ -77,7 +79,8 @@ void sigchld_handler(__attribute__((unused))int sig)
 		packets_send(p, tmp->to_cmd);
 		packets_free(p);
 
-		taskboard_remove_tid(global_data->tboard, task_id, NULL);
+		task_end(task_get(taskboard_get_tasks(global_data->tboard), task_id));
+		ed_exit_write(global_data, NULL);
 	}
 }
 
