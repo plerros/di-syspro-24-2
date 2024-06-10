@@ -131,6 +131,6 @@ void gethost(char *host)
 
 	}
 	free(ifap);
-	if (host[0] == '\0' || LOCALHOST_ONLY)
+	if (host[0] == '\0')
 		sprintf(host, "127.0.0.1");
 }
