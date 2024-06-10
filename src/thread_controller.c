@@ -69,7 +69,7 @@ void processcmd(struct controller_data_t *ptr, struct array *command)
 			break;
 
 		case cmd_issueJob: {
-			size_t task_id = taskboard_add(ptr->exd->tboard, stripped, ptr->to_cmd);
+			size_t task_id = taskboard_add(ptr->exd->tboard, stripped, ptr->to_cmd, &reply);
 			queue_push(&(ptr->exd->waiting), task_id, -1);
 			break;
 		}
@@ -178,8 +178,31 @@ void *controller_fn(void *void_args)
 {
 	struct controller_data_t *data = (struct controller_data_t *)void_args;
 
-	ed_enter_write(data->exd);
-	processcmd(data, data->command);
-	ed_exit_write(data->exd, NULL);
+	bool command_submitted = false;
+	while (!command_submitted) {
+		ed_enter_write(data->exd);
+
+		bool issueJob = false;
+		if (command_recognize(data->command) == cmd_issueJob) {
+			issueJob = true;
+		}
+
+		size_t jobs = 0;
+		if (issueJob) {
+			jobs += taskboard_get_waiting(data->exd->tboard, NULL);
+			jobs += taskboard_get_running(data->exd->tboard, NULL);
+			printf("%lu >= %lu\n", jobs, data->exd->bufferSize);
+		}
+
+		if (jobs < data->exd->bufferSize) {
+			processcmd(data, data->command);
+			command_submitted = true;
+		}
+
+		ed_exit_write(data->exd, NULL);
+		sleep(1);
+	}
+
+	controller_data_free(data);
 	return NULL;
 }

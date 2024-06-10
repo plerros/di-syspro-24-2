@@ -20,7 +20,7 @@ void executor_data_new(struct executor_data **ptr, int argc, char *argv[])
 
 	// Input
 	new->port = NULL;
-	new->bufferSize = -1;
+	new->bufferSize = 0;
 	new->threadPoolSize = 0;
 
 	if (argc > 1)
@@ -31,6 +31,9 @@ void executor_data_new(struct executor_data **ptr, int argc, char *argv[])
 		new->threadPoolSize = atoi(argv[3]);
 
 	//Multithreading
+	new->controller_threads = NULL;
+	llnode_new(&(new->controller_threads), sizeof(pthread_t), NULL);
+
 	new->worker_threads = malloc(sizeof(pthread_t) * new->threadPoolSize);
 	if (new->worker_threads == NULL)
 		abort();
@@ -84,7 +87,6 @@ void executor_data_free(struct executor_data *ptr)
 	pthread_cond_destroy(ptr->write_cond);
 	free(ptr->write_cond);
 
-
 	while (ptr->waiting != NULL)
 		queue_pop(&(ptr->waiting));
 	while (ptr->running != NULL)
@@ -129,7 +131,7 @@ void ed_exit_write(struct executor_data *ptr, bool *exit_flag)
 		ptr->writers -= 1;
 		pthread_cond_broadcast(ptr->read_cond);
 		pthread_cond_broadcast(ptr->write_cond);
-		
+
 		if (ptr->exit_flag == true && exit_flag != NULL)
 			*exit_flag = true;
 	}

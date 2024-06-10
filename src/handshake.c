@@ -25,7 +25,7 @@ void handshake_to_llnode(struct handshake_t *ptr, struct llnode **dst)
 {
 	if (dst == NULL)
 		return;
-	
+
 	struct handshake_t tmp;
 	if (*dst == NULL)
 		llnode_new(dst, sizeof(char), NULL);

@@ -30,7 +30,7 @@ static void set_nonblock(int fd)
 	int rc = fcntl(fd, F_SETFL, flags);
 	if (rc >= 0)
 		return;
-	
+
 	perror("ERROR: fcntl");
 	exit(1);
 }
@@ -39,7 +39,7 @@ static int netpipe_get_fdacc(struct netpipe_t *ptr)
 {
 	if (ptr == NULL)
 		return -1;
-	
+
 	return (ptr->fd_acc);
 }
 
@@ -47,7 +47,7 @@ static int netpipe_get_fd(struct netpipe_t *ptr)
 {
 	if (ptr == NULL)
 		return -1;
-	
+
 	return (ptr->fd);
 }
 
@@ -56,7 +56,7 @@ static void netpipe_set_fd(struct netpipe_t *ptr, int fd)
 	OPTIONAL_ASSERT(ptr != NULL);
 	if (ptr == NULL)
 		return;
-	
+
 	ptr->fd = fd;
 }
 
@@ -190,7 +190,6 @@ void wopipe_write(struct wopipe *ptr, struct array *src)
 	netpipe_write(ptr->pipe, src);
 }
 
-
 int bind_werr(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
 	if (sockfd == -1)
@@ -204,7 +203,7 @@ int bind_werr(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 		case EACCES:
 			break;
 		case EADDRINUSE:
-			break;		
+			break;
 		default:
 			perror("ERROR: bind");
 			exit(1);

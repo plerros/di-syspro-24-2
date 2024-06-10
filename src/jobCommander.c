@@ -113,14 +113,14 @@ int main(int argc, char *argv[])
 			arr = NULL;
 			packets_unpack(p, &arr);
 			packets_free(p);
-	
+
 			server_data = array_get(arr, 0);
 			if (server_data != NULL)
 				break;
 
 			array_free(arr);
 		}
-		
+
 		handshake_print(server_data);
 		wopipe_new(&to_exec, server_data->ip, server_data->port);
 	}

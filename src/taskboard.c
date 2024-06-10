@@ -37,7 +37,6 @@ void taskboard_new(struct taskboard **ptr)
 
 	new->tasks = NULL;
 	new->addlater = NULL;
-
 	// Dummy job to take up the job_id 0
 	llnode_new(&(new->addlater), sizeof(struct task *), NULL);
 	struct task *dummy_job_0 = NULL;
@@ -74,14 +73,17 @@ void taskboard_free(struct taskboard *ptr)
 size_t taskboard_add(
 	struct taskboard *ptr,
 	struct array *command,
-	struct wopipe *to_cmd)
+	struct wopipe *to_cmd,
+	struct array **reply)
 {
 	OPTIONAL_ASSERT(ptr != NULL);
+	size_t ret = 0;
+
 	if (ptr == NULL)
-		return 0;
+		goto out;
 
 	if (command == NULL)
-		return 0;
+		goto out;
 
 	sigset_t oldmask;
 	block_sigchild(&oldmask);
@@ -96,7 +98,30 @@ size_t taskboard_add(
 	llnode_add(&(ptr->addlater), &tmp);
 
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);
-	return position;
+	ret = position;
+
+out:
+	// Form reply
+	char str[100];
+	str[0] = '\0';
+
+	if (ret != 0)
+		sprintf(str, "JOB_%lu SUBMITTED", tmp->taskid);
+	else
+		printf("Can't insert job\n");
+
+	struct llnode *ll = NULL;
+	llnode_new(&ll, sizeof(char), NULL);
+
+	for (size_t i = 0; i < strlen(str) + 1; i++)
+		llnode_add(&ll, &(str[i]));
+
+	if (reply != NULL)
+		array_new(reply, ll);
+
+	llnode_free(ll);
+
+	return ret;
 }
 
 void taskboard_addnow(struct taskboard *ptr)
@@ -139,7 +164,7 @@ void taskboard_remove_tid(struct taskboard *ptr, size_t tid, struct array **repl
 	if (tmp == NULL)
 		abort();
 
-	// Form reply	
+	// Form reply
 	char str[100];
 	str[0] = '\0';
 
@@ -282,7 +307,9 @@ size_t taskboard_get_waiting(struct taskboard *ptr, struct array **waiting)
 		llnode_add(&ll, &(end));
 	}
 
-	array_new(waiting, ll);
+	if (waiting != NULL)
+		array_new(waiting, ll);
+
 	llnode_free(ll);
 
 	sigprocmask(SIG_SETMASK, &oldmask, NULL);

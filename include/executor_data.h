@@ -13,11 +13,13 @@ struct executor_data
 {
 	//Input
 	char *port;
-	int bufferSize;
+	size_t bufferSize;
 	int threadPoolSize;
 
 	// MT
+	struct llnode *controller_threads;
 	pthread_t *worker_threads;
+
 	pthread_mutex_t *mtx;
 	int readers;
 	int writers;

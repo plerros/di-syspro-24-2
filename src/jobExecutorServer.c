@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 
 		exd->from_cmd = NULL;
 		exd->to_cmd   = NULL;
-		{	
+		{
 			struct handshake_t *client_data = array_get(arr, 0);
 			if (client_data != NULL) {
 				handshake_print(client_data);
@@ -161,15 +161,17 @@ int main(int argc, char *argv[])
 		packets_unpack(p, &command);
 		packets_free(p);
 
-		struct controller_data_t *controller_data = NULL;
-		controller_data_new(&controller_data, exd, &command);
-		controller_fn(controller_data);
-		controller_data_free(controller_data);
+		if (array_get(command, 0) != NULL) {
+			struct controller_data_t *controller_data = NULL;
+			controller_data_new(&controller_data, exd, &command);
 
-//		struct worker_data_t *worker_data = NULL;
-//		worker_data_new(&worker_data, exd);
-//		worker_fn(worker_data);
-//		worker_data_free(worker_data);
+			pthread_t tmp;
+
+			int rc = pthread_create(&tmp, NULL, controller_fn, (void *)(controller_data));
+			assert(rc == 0);
+
+			llnode_add(&(exd->controller_threads), &tmp);
+		}
 
 		array_free(command);
 
@@ -183,10 +185,19 @@ int main(int argc, char *argv[])
 		ed_exit_write(exd, &exit_flag);
 	}
 
-
 	for (int i = 0; i < exd->threadPoolSize; i++) {
 		pthread_join(exd->worker_threads[i], 0);
 	}
+
+	struct array *controller_threads = NULL;
+	array_new(&controller_threads, exd->controller_threads);
+	llnode_free(exd->controller_threads);
+
+	for (size_t i = 0; i < array_get_size(controller_threads); i++) {
+		pthread_t *tmp = array_get(controller_threads, i);
+		pthread_join(*tmp, 0);
+	}
+	array_free(controller_threads);
 
 	global_data = NULL;
 	block_sigchild(NULL); // Protect Taskboard_free
