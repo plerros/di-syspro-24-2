@@ -27,17 +27,6 @@ void print_txtreadretry(int retries, int retries_max)
 	}
 }
 
-void wait_for_txt(int n)
-{
-	for (int i = 0; i < n; i++) {
-		if (access(TXT_NAME, F_OK) == 0)
-			return;
-
-		print_txtreadretry(i, n);
-		sleep(1);
-	}
-}
-
 void reply_receive(struct ropipe *from_exec)
 {
 	struct array *reply = NULL;

@@ -184,7 +184,6 @@ void *controller_fn(void *void_args)
 		if (issueJob) {
 			jobs += taskboard_get_waiting(data->exd->tboard, NULL);
 			jobs += taskboard_get_running(data->exd->tboard, NULL);
-			printf("%lu >= %lu\n", jobs, data->exd->bufferSize);
 		}
 
 		if (!issueJob || jobs < data->exd->bufferSize) {
@@ -194,7 +193,6 @@ void *controller_fn(void *void_args)
 
 		ed_exit_write(data->exd, &exit_flag);
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
-		sleep(1);
 	}
 
 	if (exit_flag && !command_submitted) {
