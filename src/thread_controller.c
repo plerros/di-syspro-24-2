@@ -192,7 +192,7 @@ void *controller_fn(void *void_args)
 			printf("%lu >= %lu\n", jobs, data->exd->bufferSize);
 		}
 
-		if (jobs < data->exd->bufferSize) {
+		if (!issueJob || jobs < data->exd->bufferSize) {
 			processcmd(data, data->command);
 			command_submitted = true;
 		}
