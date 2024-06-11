@@ -102,6 +102,8 @@ size_t taskboard_add(
 	ret = position;
 
 out:
+	if (1); // A label can only be part of a statement error
+
 	// Form reply
 	char str[100];
 	str[0] = '\0';

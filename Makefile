@@ -21,7 +21,7 @@ OPTIMIZE := -O2
 # -falign-functions=32 -falign-loops=32 -march=native -mtune=native
 
 LFLAGS := # -Wl,--gc-sections
-LIBS := #-lm
+LIBS := -lpthread #-lm
 
 SRCS := $(shell find $(SRC_DIRS) -name *.c)
 
