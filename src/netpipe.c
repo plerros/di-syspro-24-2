@@ -292,6 +292,8 @@ static void ropipe_accept(struct ropipe *ptr)
 
 bool pollin_check(int fd, int timeout)
 {
+	return true;
+/*
 	if (fd == -1)
 		return false;
 
@@ -322,6 +324,7 @@ bool pollin_check(int fd, int timeout)
 #endif
 
 	return false;
+*/
 }
 
 void ropipe_read(struct ropipe *ptr, struct array **dst, size_t msg_size, size_t msg_count)

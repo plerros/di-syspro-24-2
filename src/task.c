@@ -8,6 +8,8 @@
 #include "task.h"
 #include "netpipe.h"
 
+#include "packet.h"
+
 void task_new(
 	struct task **ptr,
 	struct array *command,
@@ -38,8 +40,41 @@ void task_free(struct task *ptr)
 	if (ptr == NULL)
 		return;
 
-	if (ptr->pid != -1)
-		kill(ptr->pid, SIGKILL);
+	if (ptr->pid != -1) {
+		wait(ptr->pid);
+		char outname[26 + 1 + 6];
+		sprintf(outname, "%d.output", ptr->pid);
+		FILE *fp = fopen(outname, "r");
+
+		struct llnode *ll = NULL;
+		llnode_new(&ll, sizeof(char), NULL);
+
+		while (1) {
+			int ch = fgetc(fp);
+			if (feof(fp))
+				break;
+			if (ferror(fp))
+				break;
+			llnode_add(&ll, &ch);
+		}
+		fclose(fp);
+		remove(outname);
+
+		char end = '\0';
+		llnode_add(&ll, &end);
+
+		struct array *output = NULL;
+		array_new(&output, ll);
+		llnode_free(ll);
+
+		struct packets *p = NULL;
+		packets_new(&p);
+		packets_pack(p, output);
+		array_free(output);
+
+		packets_send(p, ptr->to_cmd);
+		packets_free(p);
+	}
 
 	array_free(ptr->command);
 	wopipe_free(ptr->to_cmd);

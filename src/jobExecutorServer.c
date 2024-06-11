@@ -164,6 +164,15 @@ int main(int argc, char *argv[])
 		packets_unpack(p, &command);
 		packets_free(p);
 
+		if (command_recognize(command) == cmd_exit) {
+			sigset_t oldmask;
+			block_sigchild(&oldmask);
+			ed_enter_write(exd);
+			exd->exit_flag = true;
+			ed_exit_write(exd, NULL);
+			sigprocmask(SIG_SETMASK, &oldmask, NULL);
+		}
+
 		if (array_get(command, 0) != NULL) {
 			struct controller_data_t *controller_data = NULL;
 			controller_data_new(&controller_data, exd, &command);
@@ -184,8 +193,13 @@ int main(int argc, char *argv[])
 
 		// Update the exit flag.
 		// TODO make less janky.
-		ed_enter_write(exd);
-		ed_exit_write(exd, &exit_flag);
+		{
+			sigset_t oldmask;
+			block_sigchild(&oldmask);
+			ed_enter_write(exd);
+			ed_exit_write(exd, &exit_flag);
+			sigprocmask(SIG_SETMASK, &oldmask, NULL);
+		}
 	}
 
 	for (int i = 0; i < exd->threadPoolSize; i++) {
