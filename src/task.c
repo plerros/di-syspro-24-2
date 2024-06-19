@@ -1,6 +1,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/wait.h>
 
 #include "configuration.h"
 
@@ -41,7 +42,7 @@ void task_free(struct task *ptr)
 		return;
 
 	if (ptr->pid != -1) {
-		wait(ptr->pid);
+		waitpid(ptr->pid, NULL, 0);
 		char outname[26 + 1 + 6];
 		sprintf(outname, "%d.output", ptr->pid);
 		FILE *fp = fopen(outname, "r");
